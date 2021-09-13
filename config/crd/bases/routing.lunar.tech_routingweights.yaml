@@ -39,11 +39,11 @@ spec:
               annotations:
                 description: Annotations defines the desired Annotations
                 items:
-                  description: Annotations defines the desired annotations that the
+                  description: Annotation defines the desired annotations that the
                     operator should set on each ingress controlled by it
                   properties:
                     key:
-                      description: Key deéfines the annotation key
+                      description: Key defines the annotation key
                       type: string
                     value:
                       description: Value defines the annotation value

@@ -23,8 +23,8 @@ import (
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
-// Annotations defines the desired annotations that the operator should set on each ingress controlled by it
-type Annotations struct {
+// Annotation defines the desired annotations that the operator should set on each ingress controlled by it
+type Annotation struct {
 	// Key defines the annotation key
 	Key string `json:"key"`
 	// Value defines the annotation value
@@ -43,7 +43,7 @@ type RoutingWeightSpec struct {
 	DryRun bool `json:"dryRun,omitempty"`
 
 	// Annotations defines the desired Annotations
-	Annotations []Annotations `json:"annotations"`
+	Annotations []Annotation `json:"annotations"`
 }
 
 // RoutingWeightStatus defines the observed state of RoutingWeight
