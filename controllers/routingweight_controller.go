@@ -74,6 +74,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	logger.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
+	//TODO: This is not the real cluster name. Add a test to make this fail
 	if routingWeight.ClusterName != r.ClusterName {
 		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
 		return ctrl.Result{}, nil
@@ -88,13 +89,13 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	ingresses := getControlledIngresses(ingressList.Items)
 	for _, ingress := range ingresses {
-		r.setRoutingWeight(ctx, ingress, routingWeight)
+		r.setRoutingWeightAnnotations(ctx, ingress, routingWeight)
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *RoutingWeightReconciler) setRoutingWeight(ctx context.Context, ingress networkingv1.Ingress, weight *routingv1alpha1.RoutingWeight) {
+func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Context, ingress networkingv1.Ingress, weight *routingv1alpha1.RoutingWeight) {
 	//TODO: To be implemented in a future PR.
 }
 
