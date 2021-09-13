@@ -33,8 +33,6 @@ import (
 type RoutingWeightReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
-	Log    logger
-
 	ClusterName string
 }
 
@@ -52,12 +50,12 @@ type RoutingWeightReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	logger := log.FromContext(ctx)
 
 	routingWeight := &routingv1alpha1.RoutingWeight{}
 	err := r.Get(ctx, req.NamespacedName, routingWeight)
 	if err != nil {
-		r.Log.Error(err, "fetch RoutingWeight from kubernetes API")
+		logger.Error(err, "fetch RoutingWeight from kubernetes API")
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
@@ -68,9 +66,9 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return reconcile.Result{}, err
 	}
 
-	r.Log.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
+	logger.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
 	if routingWeight.ClusterName != r.ClusterName {
-		r.Log.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
+		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
 		return ctrl.Result{}, nil
 	}
 
