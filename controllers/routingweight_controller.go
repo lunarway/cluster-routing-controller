@@ -19,10 +19,13 @@ package controllers
 import (
 	"context"
 
+	"github.com/go-logr/logr"
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/api/v1alpha1"
 )
@@ -31,6 +34,8 @@ import (
 type RoutingWeightReconciler struct {
 	client.Client
 	Scheme      *runtime.Scheme
+	Log logr.Logger
+
 	ClusterName string
 }
 
@@ -50,7 +55,25 @@ type RoutingWeightReconciler struct {
 func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 
-	// your logic here
+	routingWeight := &routingv1alpha1.RoutingWeight{}
+	err := r.Get(ctx, req.NamespacedName, routingWeight)
+	if err != nil {
+		r.Log.Error(err, "fetch RoutingWeight from kubernetes API")
+		if errors.IsNotFound(err) {
+			// Request object not found, could have been deleted after reconcile request.
+			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
+			// Return and don't requeue
+			return reconcile.Result{}, nil
+		}
+		// Error reading the object - requeue the request.
+		return reconcile.Result{}, err
+	}
+
+	r.Log.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
+	if routingWeight.ClusterName != r.ClusterName{
+		r.Log.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
+		return ctrl.Result{}, nil
+	}
 
 	return ctrl.Result{}, nil
 }
