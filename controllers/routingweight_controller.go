@@ -30,7 +30,8 @@ import (
 // RoutingWeightReconciler reconciles a RoutingWeight object
 type RoutingWeightReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme      *runtime.Scheme
+	ClusterName string
 }
 
 //+kubebuilder:rbac:groups=routing.lunar.tech,resources=routingweights,verbs=get;list;watch;create;update;patch;delete
