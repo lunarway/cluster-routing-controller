@@ -36,10 +36,12 @@ spec:
           spec:
             description: RoutingWeightSpec defines the desired state of RoutingWeight
             properties:
-              foo:
-                description: Foo is an example field of RoutingWeight. Edit routingweight_types.go
-                  to remove/update
+              targetCluster:
+                description: TargetCluster is a field of RoutingWeight defines which
+                  cluster this applies to
                 type: string
+            required:
+            - targetCluster
             type: object
           status:
             description: RoutingWeightStatus defines the observed state of RoutingWeight
