@@ -38,14 +38,14 @@ BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 # Image URL to use all building/pushing image targets
 REG ?= quay.io
 ORG ?= lunarway
-PROJECT=cluster-identity-controller
+PROJECT=cluster-routing-controller
 TAG ?= latest
 
 # IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
 # This variable is used to construct full image tags for bundle and catalog images.
 #
 # For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
-# lunar.tech/cluster-identity-controller-bundle:$VERSION and lunar.tech/cluster-identity-controller-catalog:$VERSION.
+# lunar.tech/cluster-routing-controller-bundle:$VERSION and lunar.tech/cluster-routing-controller-catalog:$VERSION.
 IMAGE_TAG_BASE ?= ${REG}/${ORG}/${PROJECT}
 
 IMG ?= ${IMAGE_TAG_BASE}:${TAG}
