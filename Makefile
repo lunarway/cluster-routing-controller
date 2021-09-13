@@ -36,7 +36,20 @@ IMAGE_TAG_BASE ?= lunar.tech/cluster-routing-controller
 BUNDLE_IMG ?= $(IMAGE_TAG_BASE)-bundle:v$(VERSION)
 
 # Image URL to use all building/pushing image targets
-IMG ?= controller:latest
+REG ?= quay.io
+ORG ?= lunarway
+PROJECT=cluster-identity-controller
+TAG ?= latest
+
+# IMAGE_TAG_BASE defines the docker.io namespace and part of the image name for remote images.
+# This variable is used to construct full image tags for bundle and catalog images.
+#
+# For example, running 'make bundle-build bundle-push catalog-build catalog-push' will build and push both
+# lunar.tech/cluster-identity-controller-bundle:$VERSION and lunar.tech/cluster-identity-controller-catalog:$VERSION.
+IMAGE_TAG_BASE ?= ${REG}/${ORG}/${PROJECT}
+
+IMG ?= ${IMAGE_TAG_BASE}:${TAG}
+
 # Produce CRDs that work back to Kubernetes 1.11 (no version conversion)
 CRD_OPTIONS ?= "crd:trivialVersions=true,preserveUnknownFields=false"
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
