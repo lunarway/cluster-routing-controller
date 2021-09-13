@@ -19,6 +19,8 @@ package controllers
 import (
 	"context"
 
+	networkingv1 "k8s.io/api/networking/v1"
+
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -28,6 +30,11 @@ import (
 
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/api/v1alpha1"
 )
+
+const (
+	controlledByAnnotationKey = "routing.lunar.tech/controlled"
+)
+
 
 // RoutingWeightReconciler reconciles a RoutingWeight object
 type RoutingWeightReconciler struct {
@@ -73,7 +80,38 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
+	ingressList := &networkingv1.IngressList{}
+	var listOpts []client.ListOption
+	if err = r.List(ctx, ingressList, listOpts...); err != nil {
+		logger.Error(err, "Failed to list ingresses")
+		return ctrl.Result{}, err
+	}
+
+	ingresses := getControlledIngresses(ingressList.Items)
+	for _, ingress := range ingresses {
+		r.setRoutingWeight(ctx, ingress, routingWeight)
+	}
+
 	return ctrl.Result{}, nil
+}
+
+func (r *RoutingWeightReconciler) setRoutingWeight(ctx context.Context, ingress networkingv1.Ingress, weight *routingv1alpha1.RoutingWeight) {
+	
+}
+
+func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress {
+	var ingresses []networkingv1.Ingress
+
+	for _, ingress := range items {
+		value, ok := ingress.Annotations[controlledByAnnotationKey]
+		if !ok || value != "true"{
+			continue
+		}
+
+		ingresses = append(ingresses, ingress)
+	}
+
+	return ingresses
 }
 
 // SetupWithManager sets up the controller with the Manager.
