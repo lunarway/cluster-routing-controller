@@ -36,6 +36,23 @@ spec:
           spec:
             description: RoutingWeightSpec defines the desired state of RoutingWeight
             properties:
+              annotations:
+                description: Annotations defines the desired Annotations
+                items:
+                  description: Annotations defines the desired annotations that the
+                    operator should set on each ingress controlled by it
+                  properties:
+                    key:
+                      description: Key deéfines the annotation key
+                      type: string
+                    value:
+                      description: Value defines the annotation value
+                      type: string
+                  required:
+                  - key
+                  - value
+                  type: object
+                type: array
               dryRun:
                 description: DryRun defines if a Weight should be applied or simulated
                   If set to true it only write changes to stdout
@@ -45,6 +62,7 @@ spec:
                   cluster this applies to
                 type: string
             required:
+            - annotations
             - targetCluster
             type: object
           status:

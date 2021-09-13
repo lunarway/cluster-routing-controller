@@ -35,7 +35,6 @@ const (
 	controlledByAnnotationKey = "routing.lunar.tech/controlled"
 )
 
-
 // RoutingWeightReconciler reconciles a RoutingWeight object
 type RoutingWeightReconciler struct {
 	client.Client
@@ -96,7 +95,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 func (r *RoutingWeightReconciler) setRoutingWeight(ctx context.Context, ingress networkingv1.Ingress, weight *routingv1alpha1.RoutingWeight) {
-	
+
 }
 
 func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress {
@@ -104,7 +103,7 @@ func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress
 
 	for _, ingress := range items {
 		value, ok := ingress.Annotations[controlledByAnnotationKey]
-		if !ok || value != "true"{
+		if !ok || value != "true" {
 			continue
 		}
 
