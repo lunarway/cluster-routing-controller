@@ -18,6 +18,26 @@ import (
 )
 
 func TestRoutingWeightController(t *testing.T) {
+	var (
+		typeMeta = metav1.TypeMeta{
+			Kind:       "RoutingWeight",
+			APIVersion: "v1alpha1",
+		}
+		metadata = metav1.ObjectMeta{
+			Name:      "name",
+			Namespace: "namespace",
+		}
+		clusterName    = "clusterName"
+		namespacedName = types.NamespacedName{
+			Namespace: "namespace",
+			Name:      "name",
+		}
+		annotation = v1alpha1.Annotation{
+			Key:   "key",
+			Value: "value",
+		}
+	)
+
 	t.Run("Set annotation on ingress when control annotation is set", func(t *testing.T) {
 
 	})
@@ -38,44 +58,28 @@ func TestRoutingWeightController(t *testing.T) {
 		s := scheme.Scheme
 
 		routingWeightResource := &v1alpha1.RoutingWeight{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "RoutingWeight",
-				APIVersion: "v1alpha1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "name",
-				Namespace: "namespace",
-			},
+			TypeMeta:   typeMeta,
+			ObjectMeta: metadata,
 			Spec: v1alpha1.RoutingWeightSpec{
-				TargetCluster: "targetCluster",
+				TargetCluster: clusterName,
 				DryRun:        false,
-				Annotations: []v1alpha1.Annotation{
-					{
-						Key:   "key",
-						Value: "value",
-					},
-				},
+				Annotations:   []v1alpha1.Annotation{annotation},
 			},
 			Status: v1alpha1.RoutingWeightStatus{},
 		}
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 
-		// Add tracked objects to the fake client simulating their existence in a k8s
-		// cluster
 		cl := fake.NewClientBuilder().
 			WithObjects(routingWeightResource).
 			Build()
 		sut := RoutingWeightReconciler{
 			Client:      cl,
 			Scheme:      s,
-			ClusterName: "clusterName",
+			ClusterName: clusterName,
 		}
 
 		result, err := sut.Reconcile(context.Background(), ctrl.Request{
-			NamespacedName: types.NamespacedName{
-				Namespace: "namespace",
-				Name:      "name",
-			},
+			NamespacedName: namespacedName,
 		})
 
 		assert.NoError(t, err)
