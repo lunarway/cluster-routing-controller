@@ -36,6 +36,17 @@ func TestRoutingWeightController(t *testing.T) {
 			Key:   "key",
 			Value: "value",
 		}
+
+		routingWeightResource = &v1alpha1.RoutingWeight{
+			TypeMeta:   typeMeta,
+			ObjectMeta: metadata,
+			Spec: v1alpha1.RoutingWeightSpec{
+				TargetCluster: clusterName,
+				DryRun:        false,
+				Annotations:   []v1alpha1.Annotation{annotation},
+			},
+			Status: v1alpha1.RoutingWeightStatus{},
+		}
 	)
 
 	t.Run("Set annotation on ingress when control annotation is set", func(t *testing.T) {
@@ -56,17 +67,6 @@ func TestRoutingWeightController(t *testing.T) {
 
 	t.Run("Does nothing when no ingresses exist", func(t *testing.T) {
 		s := scheme.Scheme
-
-		routingWeightResource := &v1alpha1.RoutingWeight{
-			TypeMeta:   typeMeta,
-			ObjectMeta: metadata,
-			Spec: v1alpha1.RoutingWeightSpec{
-				TargetCluster: clusterName,
-				DryRun:        false,
-				Annotations:   []v1alpha1.Annotation{annotation},
-			},
-			Status: v1alpha1.RoutingWeightStatus{},
-		}
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 
 		cl := fake.NewClientBuilder().
