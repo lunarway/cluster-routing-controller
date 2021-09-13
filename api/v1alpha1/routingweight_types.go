@@ -28,8 +28,8 @@ type RoutingWeightSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// Foo is an example field of RoutingWeight. Edit routingweight_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	// TargetCluster is a field of RoutingWeight defines which cluster this applies to
+	TargetCluster string `json:"targetCluster"`
 }
 
 // RoutingWeightStatus defines the observed state of RoutingWeight
