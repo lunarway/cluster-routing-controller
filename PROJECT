@@ -1,0 +1,9 @@
+domain: lunar.tech
+layout:
+- go.kubebuilder.io/v3
+plugins:
+  manifests.sdk.operatorframework.io/v2: {}
+  scorecard.sdk.operatorframework.io/v2: {}
+projectName: cluster-routing-controller
+repo: github/lunarway/cluster-routing-controller
+version: "3"
