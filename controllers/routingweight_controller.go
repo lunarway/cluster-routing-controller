@@ -32,7 +32,7 @@ import (
 // RoutingWeightReconciler reconciles a RoutingWeight object
 type RoutingWeightReconciler struct {
 	client.Client
-	Scheme *runtime.Scheme
+	Scheme      *runtime.Scheme
 	ClusterName string
 }
 

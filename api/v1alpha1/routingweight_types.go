@@ -30,6 +30,9 @@ type RoutingWeightSpec struct {
 
 	// TargetCluster is a field of RoutingWeight defines which cluster this applies to
 	TargetCluster string `json:"targetCluster"`
+	// DryRun defines if a Weight should be applied or simulated
+	// If set to true it only write changes to stdout
+	DryRun bool `json:"dryRun,omitempty"`
 }
 
 // RoutingWeightStatus defines the observed state of RoutingWeight
