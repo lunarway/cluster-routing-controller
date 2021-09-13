@@ -1,0 +1,4 @@
+plan: false
+vars:
+  service: cluster-routing-controller
+  squad: nasa
