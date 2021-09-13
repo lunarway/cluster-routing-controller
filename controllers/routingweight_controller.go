@@ -55,13 +55,14 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	routingWeight := &routingv1alpha1.RoutingWeight{}
 	err := r.Get(ctx, req.NamespacedName, routingWeight)
 	if err != nil {
-		logger.Error(err, "fetch RoutingWeight from kubernetes API")
 		if errors.IsNotFound(err) {
 			// Request object not found, could have been deleted after reconcile request.
 			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
 			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
+
+		logger.Error(err, "fetch RoutingWeight from kubernetes API")
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
