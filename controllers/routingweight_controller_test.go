@@ -18,7 +18,23 @@ import (
 )
 
 func TestRoutingWeightController(t *testing.T) {
-	t.Run("RoutingWeight without ingress", func(t *testing.T) {
+	t.Run("Set annotation on ingress when control annotation is set", func(t *testing.T) {
+
+	})
+
+	t.Run("Does not set annotation on ingress when cluster names does not match", func(t *testing.T) {
+
+	})
+
+	t.Run("Does not set annotation on ingress when control annotation is not set", func(t *testing.T) {
+
+	})
+
+	t.Run("Updates annotation on ingress when annotation value has changed", func(t *testing.T) {
+
+	})
+
+	t.Run("Does nothing when no ingresses exist", func(t *testing.T) {
 		s := scheme.Scheme
 
 		routingWeightResource := &v1alpha1.RoutingWeight{
