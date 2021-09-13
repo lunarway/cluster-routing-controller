@@ -1,0 +1,7 @@
+apiVersion: routing.lunar.tech/v1alpha1
+kind: RoutingWeight
+metadata:
+  name: routingweight-sample
+spec:
+  # Add fields here
+  foo: bar
