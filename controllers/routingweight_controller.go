@@ -19,7 +19,6 @@ package controllers
 import (
 	"context"
 
-	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -33,8 +32,8 @@ import (
 // RoutingWeightReconciler reconciles a RoutingWeight object
 type RoutingWeightReconciler struct {
 	client.Client
-	Scheme      *runtime.Scheme
-	Log logr.Logger
+	Scheme *runtime.Scheme
+	Log    logger
 
 	ClusterName string
 }
@@ -70,7 +69,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	r.Log.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
-	if routingWeight.ClusterName != r.ClusterName{
+	if routingWeight.ClusterName != r.ClusterName {
 		r.Log.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
 		return ctrl.Result{}, nil
 	}
