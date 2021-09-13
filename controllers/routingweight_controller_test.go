@@ -66,17 +66,7 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 
 	t.Run("Does nothing when no ingresses exist", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-
-		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource).
-			Build()
-		sut := RoutingWeightReconciler{
-			Client:      cl,
-			Scheme:      s,
-			ClusterName: clusterName,
-		}
+		sut := createSut(routingWeightResource, clusterName)
 
 		result, err := sut.Reconcile(context.Background(), ctrl.Request{
 			NamespacedName: namespacedName,
@@ -85,4 +75,20 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 	})
+}
+
+func createSut(routingWeightResource *v1alpha1.RoutingWeight, clusterName string) RoutingWeightReconciler {
+	s := scheme.Scheme
+	s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+
+	cl := fake.NewClientBuilder().
+		WithObjects(routingWeightResource).
+		Build()
+	sut := RoutingWeightReconciler{
+		Client:      cl,
+		Scheme:      s,
+		ClusterName: clusterName,
+	}
+
+	return sut
 }
