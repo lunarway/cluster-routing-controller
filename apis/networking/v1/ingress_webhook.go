@@ -35,6 +35,11 @@ type IngressAnnotator struct {
 	decoder *admission.Decoder
 }
 
+func (a *IngressAnnotator) InjectDecoder(d *admission.Decoder) error {
+	a.decoder = d
+	return nil
+}
+
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	ingress := &networkingv1.Ingress{}
@@ -44,6 +49,7 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	// mutate the fields in ingress
+	ingresslog.Info("Admissionhook found Ingress", "ingress", ingress.Name)
 
 	marshaledingress, err := json.Marshal(ingress)
 	if err != nil {

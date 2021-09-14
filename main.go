@@ -109,7 +109,7 @@ func main() {
 	}
 
 	//+kubebuilder:scaffold:builder
-	mgr.GetWebhookServer().Register("/mutate-v1-pod", &webhook.Admission{Handler: &v1.IngressAnnotator{Client: mgr.GetClient()}})
+	mgr.GetWebhookServer().Register("/mutate-networking-k8s-io-v1-ingress", &webhook.Admission{Handler: &v1.IngressAnnotator{Client: mgr.GetClient()}})
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
