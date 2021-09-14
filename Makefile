@@ -214,3 +214,12 @@ catalog-build: opm ## Build a catalog image.
 .PHONY: catalog-push
 catalog-push: ## Push a catalog image.
 	$(MAKE) docker-push IMG=$(CATALOG_IMG)
+
+.PHONY: release
+release:
+	sed -i "" 's|^VERSION.*|VERSION ?= ${TAG}|' Makefile
+	git add Makefile
+	git commit -m"Release v${TAG}"
+	git tag v${TAG}
+	git push
+	git push --tags
