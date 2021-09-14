@@ -17,29 +17,39 @@ limitations under the License.
 package v1
 
 import (
-	ctrl "sigs.k8s.io/controller-runtime"
+	"context"
+	"encoding/json"
+	"net/http"
+
+	networkingv1 "k8s.io/api/networking/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
-	"sigs.k8s.io/controller-runtime/pkg/webhook"
+	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
 )
 
 // log is for logging in this package.
 var ingresslog = logf.Log.WithName("ingress-resource")
 
-func (r *Ingress) SetupWebhookWithManager(mgr ctrl.Manager) error {
-	return ctrl.NewWebhookManagedBy(mgr).
-		For(r).
-		Complete()
+type IngressAnnotator struct {
+	Client  client.Client
+	decoder *admission.Decoder
 }
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
+func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
+	pod := &networkingv1.Ingress{}
+	err := a.decoder.Decode(req, pod)
+	if err != nil {
+		return admission.Errored(http.StatusBadRequest, err)
+	}
+
+	// mutate the fields in pod
+
+	marshaledPod, err := json.Marshal(pod)
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
+	}
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
+}
 
 //+kubebuilder:webhook:path=/mutate-networking-k8s-io-v1-ingress,mutating=true,failurePolicy=fail,sideEffects=None,groups=networking.k8s.io,resources=ingresses,verbs=create;update,versions=v1,name=mingress.kb.io,admissionReviewVersions={v1,v1beta1}
-
-var _ webhook.Defaulter = &Ingress{}
-
-// Default implements webhook.Defaulter so a webhook will be registered for the type
-func (r *Ingress) Default() {
-	ingresslog.Info("default", "name", r.Name)
-
-	// TODO(user): fill in your defaulting logic.
-}
