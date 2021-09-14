@@ -37,19 +37,19 @@ type IngressAnnotator struct {
 
 // EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
-	pod := &networkingv1.Ingress{}
-	err := a.decoder.Decode(req, pod)
+	ingress := &networkingv1.Ingress{}
+	err := a.decoder.Decode(req, ingress)
 	if err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	// mutate the fields in pod
+	// mutate the fields in ingress
 
-	marshaledPod, err := json.Marshal(pod)
+	marshaledingress, err := json.Marshal(ingress)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledPod)
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledingress)
 }
 
 //+kubebuilder:webhook:path=/mutate-networking-k8s-io-v1-ingress,mutating=true,failurePolicy=fail,sideEffects=None,groups=networking.k8s.io,resources=ingresses,verbs=create;update,versions=v1,name=mingress.kb.io,admissionReviewVersions={v1,v1beta1}
