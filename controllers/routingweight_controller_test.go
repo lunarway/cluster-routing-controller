@@ -101,6 +101,8 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.Equal(t, expectedAnnotations, actualIngress.Annotations)
 	})
 
+	t.Run("Set annotations on two ingresses when control annotation is set", func(t *testing.T) {})
+
 	t.Run("Does not set annotation on ingress when cluster names does not match", func(t *testing.T) {
 
 	})
