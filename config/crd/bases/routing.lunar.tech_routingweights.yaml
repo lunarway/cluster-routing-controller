@@ -39,11 +39,11 @@ spec:
               annotations:
                 description: Annotations defines the desired Annotations
                 items:
-                  description: Annotations defines the desired annotations that the
+                  description: Annotation defines the desired annotations that the
                     operator should set on each ingress controlled by it
                   properties:
                     key:
-                      description: Key deéfines the annotation key
+                      description: Key defines the annotation key
                       type: string
                     value:
                       description: Value defines the annotation value
@@ -58,7 +58,7 @@ spec:
                   If set to true it only write changes to stdout
                 type: boolean
               targetCluster:
-                description: TargetCluster is a field of RoutingWeight defines which
+                description: ClusterName is a field of RoutingWeight defines which
                   cluster this applies to
                 type: string
             required:

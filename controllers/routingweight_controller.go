@@ -74,28 +74,50 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	logger.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
-	if routingWeight.ClusterName != r.ClusterName {
+	if routingWeight.Spec.ClusterName != r.ClusterName {
 		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
 		return ctrl.Result{}, nil
 	}
 
 	ingressList := &networkingv1.IngressList{}
-	var listOpts []client.ListOption
-	if err = r.List(ctx, ingressList, listOpts...); err != nil {
+	if err := r.List(ctx, ingressList); err != nil {
 		logger.Error(err, "Failed to list ingresses")
 		return ctrl.Result{}, err
 	}
 
 	ingresses := getControlledIngresses(ingressList.Items)
+	if len(ingresses) == 0 {
+		logger.Info("Found no ingresses to be controlled")
+		return ctrl.Result{}, nil
+	}
+
 	for _, ingress := range ingresses {
-		r.setRoutingWeight(ctx, ingress, routingWeight)
+		err = r.setRoutingWeightAnnotations(ctx, ingress, routingWeight)
+		if err != nil {
+			logger.Error(err, "failed setting routing weight annotations on ingress", "ingress", ingress.Namespace)
+			return reconcile.Result{}, err
+		}
 	}
 
 	return ctrl.Result{}, nil
 }
 
-func (r *RoutingWeightReconciler) setRoutingWeight(ctx context.Context, ingress networkingv1.Ingress, weight *routingv1alpha1.RoutingWeight) {
-	//TODO: To be implemented in a future PR.
+func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Context, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
+	logger := log.FromContext(ctx)
+	logger.Info("Setting annotations on ingress", "ingress", ingress.Name)
+
+	for _, annotation := range routingWeight.Spec.Annotations {
+		logger.Info("Setting annotation on ingress", "ingress", ingress.Name, "annotation")
+
+		ingress.Annotations[annotation.Key] = annotation.Value
+	}
+
+	err := r.Update(ctx, &ingress)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress {
