@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 
 	networkingv1 "k8s.io/api/networking/v1"
 
@@ -103,13 +104,21 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Context, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
-	logger := log.FromContext(ctx)
-	logger.Info("Setting annotations on ingress", "ingress", ingress.Name)
+	logPrefix := ""
+	if routingWeight.Spec.DryRun {
+		logPrefix = "[dryRun]"
+	}
 
+	logger := log.FromContext(ctx)
 	for _, annotation := range routingWeight.Spec.Annotations {
-		logger.Info("Setting annotation on ingress", "ingress", ingress.Name, "annotation")
+		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation")
 
 		ingress.Annotations[annotation.Key] = annotation.Value
+	}
+
+	logger.Info(fmt.Sprintf("%s Updating ingress object in api server", logPrefix))
+	if routingWeight.Spec.DryRun {
+		return nil
 	}
 
 	err := r.Update(ctx, &ingress)
