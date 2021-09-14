@@ -32,8 +32,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	routingv1alpha1 "github/lunarway/cluster-routing-controller/api/v1alpha1"
-	"github/lunarway/cluster-routing-controller/controllers"
+	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
+	"github/lunarway/cluster-routing-controller/controllers/routing"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -87,7 +87,7 @@ func main() {
 		os.Exit(1)
 	}
 
-	if err = (&controllers.RoutingWeightReconciler{
+	if err = (&routing.RoutingWeightReconciler{
 		Client:      mgr.GetClient(),
 		Scheme:      mgr.GetScheme(),
 		ClusterName: clusterName,

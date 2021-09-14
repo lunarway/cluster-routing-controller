@@ -1,10 +1,10 @@
-package controllers
+package routing
 
 import (
 	"context"
 	"testing"
 
-	"github/lunarway/cluster-routing-controller/api/v1alpha1"
+	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 
 	networkingv1 "k8s.io/api/networking/v1"
 

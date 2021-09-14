@@ -14,11 +14,13 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package controllers
+package routing
 
 import (
 	"context"
 	"fmt"
+
+	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 
 	networkingv1 "k8s.io/api/networking/v1"
 
@@ -28,8 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-
-	routingv1alpha1 "github/lunarway/cluster-routing-controller/api/v1alpha1"
 )
 
 const (
