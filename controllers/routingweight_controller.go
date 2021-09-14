@@ -104,16 +104,16 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 }
 
 func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Context, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
-	logPrefix := ""
+	logPrefix := "dryRun=false"
 	if routingWeight.Spec.DryRun {
-		logPrefix = "[dryRun]"
+		logPrefix = "dryRun=true"
 	}
 
 	logger := log.FromContext(ctx)
 	for _, annotation := range routingWeight.Spec.Annotations {
 		value, ok := ingress.Annotations[annotation.Key]
 		if ok {
-			logger.Info(fmt.Sprintf("%s Existing annotation found on ingress: %s:%s", logPrefix, annotation.Key, value), "ingress", ingress.Name)
+			logger.Info(fmt.Sprintf("%s Existing annotation found on ingress: %s:'%s'", logPrefix, annotation.Key, value), "ingress", ingress.Name)
 		}
 
 		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation", annotation.Value)
@@ -122,6 +122,7 @@ func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Contex
 
 	logger.Info(fmt.Sprintf("%s Updating ingress object in api server", logPrefix))
 	if routingWeight.Spec.DryRun {
+		logger.Info(fmt.Sprintf("%s Dryrun of change. Doing nothing", logPrefix))
 		return nil
 	}
 
