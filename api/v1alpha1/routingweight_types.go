@@ -36,8 +36,8 @@ type RoutingWeightSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
 
-	// TargetCluster is a field of RoutingWeight defines which cluster this applies to
-	TargetCluster string `json:"targetCluster"` //TODO: Rename to ClusterName
+	// ClusterName is a field of RoutingWeight defines which cluster this applies to
+	ClusterName string `json:"targetCluster"`
 	// DryRun defines if a Weight should be applied or simulated
 	// If set to true it only write changes to stdout
 	DryRun bool `json:"dryRun,omitempty"`

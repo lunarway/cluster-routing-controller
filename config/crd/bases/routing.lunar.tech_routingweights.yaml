@@ -58,7 +58,7 @@ spec:
                   If set to true it only write changes to stdout
                 type: boolean
               targetCluster:
-                description: TargetCluster is a field of RoutingWeight defines which
+                description: ClusterName is a field of RoutingWeight defines which
                   cluster this applies to
                 type: string
             required:
