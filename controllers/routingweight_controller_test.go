@@ -111,7 +111,7 @@ func TestRoutingWeightController(t *testing.T) {
 		ctx = context.Background()
 	)
 
-	t.Run("Set annotations on controlledIngress when control annotation is set", func(t *testing.T) {
+	t.Run("Set annotations on ingress when control annotation is set", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
@@ -145,7 +145,7 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.Equal(t, expectedAnnotations, actualIngress.Annotations)
 	})
 
-	t.Run("Does not set annotation on controlledIngress when cluster names does not match", func(t *testing.T) {
+	t.Run("Does not set annotation on ingress when cluster names does not match", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
