@@ -53,17 +53,19 @@ spec:
                   - value
                   type: object
                 type: array
+              clusterName:
+                description: ClusterName defines which cluster this routingWeight
+                  belongs to The operator will only apply routingWeights where the
+                  clusterName matches its own identity
+                type: string
               dryRun:
                 description: DryRun defines if a Weight should be applied or simulated
-                  If set to true it only write changes to stdout
+                  If set to true it only write changes to stdout and no changes to
+                  any Ingress objects are done
                 type: boolean
-              targetCluster:
-                description: ClusterName is a field of RoutingWeight defines which
-                  cluster this applies to
-                type: string
             required:
             - annotations
-            - targetCluster
+            - clusterName
             type: object
           status:
             description: RoutingWeightStatus defines the observed state of RoutingWeight
