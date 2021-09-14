@@ -32,8 +32,13 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
+	v1 "github/lunarway/cluster-routing-controller/apis/networking/v1"
+
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
+	networkingcontrollers "github/lunarway/cluster-routing-controller/controllers/networking"
 	"github/lunarway/cluster-routing-controller/controllers/routing"
+
+	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -95,7 +100,16 @@ func main() {
 		setupLog.Error(err, "unable to create controller", "controller", "RoutingWeight")
 		os.Exit(1)
 	}
+	if err = (&networkingcontrollers.IngressReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Ingress")
+		os.Exit(1)
+	}
+
 	//+kubebuilder:scaffold:builder
+	mgr.GetWebhookServer().Register("/mutate-networking-k8s-io-v1-ingress", &webhook.Admission{Handler: &v1.IngressAnnotator{Client: mgr.GetClient()}})
 
 	if err := mgr.AddHealthzCheck("healthz", healthz.Ping); err != nil {
 		setupLog.Error(err, "unable to set up health check")
