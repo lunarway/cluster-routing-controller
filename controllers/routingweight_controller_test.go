@@ -86,21 +86,9 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 
-		expectedIngress := &networkingv1.Ingress{
-			TypeMeta: metav1.TypeMeta{
-				Kind:       "Ingress",
-				APIVersion: "networking.k8s.io/v1",
-			},
-			ObjectMeta: metav1.ObjectMeta{
-				Name:      "ingress-name",
-				Namespace: "ingress-namespace",
-				Annotations: map[string]string{
-					"key":                           "value",
-					"routing.lunar.tech/controlled": "true",
-				},
-			},
-			Spec:   networkingv1.IngressSpec{},
-			Status: networkingv1.IngressStatus{},
+		expectedAnnotations := map[string]string{
+			"key":                           "value",
+			"routing.lunar.tech/controlled": "true",
 		}
 
 		actualIngress := &networkingv1.Ingress{}
@@ -110,7 +98,7 @@ func TestRoutingWeightController(t *testing.T) {
 		}, actualIngress)
 		assert.NoError(t, err)
 
-		assert.Equal(t, expectedIngress.Annotations, actualIngress.Annotations)
+		assert.Equal(t, expectedAnnotations, actualIngress.Annotations)
 	})
 
 	t.Run("Does not set annotation on ingress when cluster names does not match", func(t *testing.T) {
