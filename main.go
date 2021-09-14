@@ -32,9 +32,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/healthz"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
-	networkingv1 "github/lunarway/cluster-routing-controller/apis/networking/v1"
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
-	networkingcontrollers "github/lunarway/cluster-routing-controller/controllers/networking"
 	"github/lunarway/cluster-routing-controller/controllers/routing"
 	//+kubebuilder:scaffold:imports
 )
@@ -48,7 +46,6 @@ func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
 	utilruntime.Must(routingv1alpha1.AddToScheme(scheme))
-	utilruntime.Must(networkingv1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
 }
 
@@ -96,17 +93,6 @@ func main() {
 		ClusterName: clusterName,
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "RoutingWeight")
-		os.Exit(1)
-	}
-	if err = (&networkingcontrollers.IngressReconciler{
-		Client: mgr.GetClient(),
-		Scheme: mgr.GetScheme(),
-	}).SetupWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create controller", "controller", "Ingress")
-		os.Exit(1)
-	}
-	if err = (&networkingv1.Ingress{}).SetupWebhookWithManager(mgr); err != nil {
-		setupLog.Error(err, "unable to create webhook", "webhook", "Ingress")
 		os.Exit(1)
 	}
 	//+kubebuilder:scaffold:builder

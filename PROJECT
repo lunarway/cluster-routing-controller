@@ -17,16 +17,4 @@ resources:
   kind: RoutingWeight
   path: github/lunarway/cluster-routing-controller/api/v1alpha1
   version: v1alpha1
-- api:
-    crdVersion: v1
-    namespaced: true
-  controller: true
-  domain: lunar.tech
-  group: networking
-  kind: Ingress
-  path: github/lunarway/cluster-routing-controller/apis/networking/v1
-  version: v1
-  webhooks:
-    defaulting: true
-    webhookVersion: v1
 version: "3"
