@@ -1,0 +1,7 @@
+apiVersion: networking.lunar.tech/v1
+kind: Ingress
+metadata:
+  name: ingress-sample
+spec:
+  # Add fields here
+  foo: bar
