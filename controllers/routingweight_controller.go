@@ -80,7 +80,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	ingressList := &networkingv1.IngressList{}
-	if err = r.List(ctx, ingressList); err != nil {
+	if err := r.List(ctx, ingressList); err != nil {
 		logger.Error(err, "Failed to list ingresses")
 		return ctrl.Result{}, err
 	}
