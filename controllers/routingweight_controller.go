@@ -101,7 +101,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	return ctrl.Result{}, nil
 }
 
-func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Context, ingress *networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
+func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Context, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
 	logger := log.FromContext(ctx)
 	logger.Info("Setting annotations on ingress", "ingress", ingress.Name)
 
@@ -111,7 +111,7 @@ func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Contex
 		ingress.Annotations[annotation.Key] = annotation.Value
 	}
 
-	err := r.Update(ctx, ingress)
+	err := r.Update(ctx, &ingress)
 	if err != nil {
 		return err
 	}
@@ -119,8 +119,8 @@ func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Contex
 	return nil
 }
 
-func getControlledIngresses(items []networkingv1.Ingress) []*networkingv1.Ingress {
-	var ingresses []*networkingv1.Ingress
+func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress {
+	var ingresses []networkingv1.Ingress
 
 	for _, ingress := range items {
 		value, ok := ingress.Annotations[controlledByAnnotationKey]
@@ -128,7 +128,7 @@ func getControlledIngresses(items []networkingv1.Ingress) []*networkingv1.Ingres
 			continue
 		}
 
-		ingresses = append(ingresses, &ingress)
+		ingresses = append(ingresses, ingress)
 	}
 
 	return ingresses
