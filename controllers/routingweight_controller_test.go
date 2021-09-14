@@ -104,10 +104,39 @@ func TestRoutingWeightController(t *testing.T) {
 	t.Run("Set annotations on two ingresses when control annotation is set", func(t *testing.T) {})
 
 	t.Run("Does not set annotation on ingress when cluster names does not match", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, ingress)
+		cl := fake.NewClientBuilder().
+			WithObjects(routingWeightResource, ingress).
+			Build()
+		sut := createSut(cl, s, "Another cluster name")
 
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: metadata.Namespace,
+				Name:      metadata.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		actualIngress := &networkingv1.Ingress{}
+		err = cl.Get(ctx, types.NamespacedName{
+			Name:      ingress.Name,
+			Namespace: ingress.Namespace,
+		}, actualIngress)
+		assert.NoError(t, err)
+
+		assert.Equal(t, ingress, actualIngress)
 	})
 
 	t.Run("Does not set annotation on ingress when control annotation is not set", func(t *testing.T) {
+
+	})
+
+	t.Run("Does not set annotation on ingress when control annotation is set but is in dryRun mode", func(t *testing.T) {
 
 	})
 
