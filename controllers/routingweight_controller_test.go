@@ -30,15 +30,11 @@ func TestRoutingWeightController(t *testing.T) {
 			APIVersion: "v1alpha1",
 		}
 		metadata = metav1.ObjectMeta{
-			Name:      "name",
-			Namespace: "namespace",
+			Name:      "routingWeight",
+			Namespace: "routingWeightNamespace",
 		}
-		clusterName    = "clusterName"
-		namespacedName = types.NamespacedName{
-			Namespace: "namespace",
-			Name:      "name",
-		}
-		annotation = v1alpha1.Annotation{
+		clusterName = "clusterName"
+		annotation  = v1alpha1.Annotation{
 			Key:   "key",
 			Value: "value",
 		}
@@ -47,9 +43,9 @@ func TestRoutingWeightController(t *testing.T) {
 			TypeMeta:   typeMeta,
 			ObjectMeta: metadata,
 			Spec: v1alpha1.RoutingWeightSpec{
-				TargetCluster: clusterName,
-				DryRun:        false,
-				Annotations:   []v1alpha1.Annotation{annotation},
+				ClusterName: clusterName,
+				DryRun:      false,
+				Annotations: []v1alpha1.Annotation{annotation},
 			},
 			Status: v1alpha1.RoutingWeightStatus{},
 		}
@@ -59,8 +55,8 @@ func TestRoutingWeightController(t *testing.T) {
 				APIVersion: "networking.k8s.io/v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "ingress-name",
-				Namespace: "ingress-namespace",
+				Name:      "ingressName",
+				Namespace: "ingressNamespace",
 				Annotations: map[string]string{
 					"routing.lunar.tech/controlled": "true",
 				},
@@ -81,11 +77,31 @@ func TestRoutingWeightController(t *testing.T) {
 		sut := createSut(cl, s, clusterName)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
-			NamespacedName: namespacedName,
+			NamespacedName: types.NamespacedName{
+				Namespace: metadata.Namespace,
+				Name:      metadata.Name,
+			},
 		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
+
+		expectedIngress := &networkingv1.Ingress{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Ingress",
+				APIVersion: "networking.k8s.io/v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "ingress-name",
+				Namespace: "ingress-namespace",
+				Annotations: map[string]string{
+					"key":                           "value",
+					"routing.lunar.tech/controlled": "true",
+				},
+			},
+			Spec:   networkingv1.IngressSpec{},
+			Status: networkingv1.IngressStatus{},
+		}
 
 		actualIngress := &networkingv1.Ingress{}
 		err = cl.Get(ctx, types.NamespacedName{
@@ -94,12 +110,7 @@ func TestRoutingWeightController(t *testing.T) {
 		}, actualIngress)
 		assert.NoError(t, err)
 
-		expectedIngress := ingress
-		for key, value := range routingWeightResource.Annotations {
-			expectedIngress.Annotations[key] = value
-		}
-
-		assert.Equal(t, expectedIngress, actualIngress)
+		assert.Equal(t, expectedIngress.Annotations, actualIngress.Annotations)
 	})
 
 	t.Run("Does not set annotation on ingress when cluster names does not match", func(t *testing.T) {
@@ -123,7 +134,10 @@ func TestRoutingWeightController(t *testing.T) {
 		sut := createSut(cl, s, clusterName)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
-			NamespacedName: namespacedName,
+			NamespacedName: types.NamespacedName{
+				Namespace: metadata.Namespace,
+				Name:      metadata.Name,
+			},
 		})
 
 		assert.NoError(t, err)
@@ -131,8 +145,8 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 }
 
-func createSut(c client.WithWatch, s *runtime.Scheme, clusterName string) RoutingWeightReconciler {
-	return RoutingWeightReconciler{
+func createSut(c client.WithWatch, s *runtime.Scheme, clusterName string) *RoutingWeightReconciler {
+	return &RoutingWeightReconciler{
 		Client:      c,
 		Scheme:      s,
 		ClusterName: clusterName,
