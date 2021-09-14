@@ -238,7 +238,7 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.Equal(t, controlledIngress, actualIngress)
 	})
 
-	t.Run("Updates annotation on ingress when annotation value has changed", func(t *testing.T) {
+	t.Run("Updates annotation on ingress when annotation already exists with different value", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngressWithWeights)
