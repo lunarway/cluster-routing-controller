@@ -88,6 +88,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	ingresses := getControlledIngresses(ingressList.Items)
 	if len(ingresses) == 0 {
 		logger.Info("Found no ingresses to be controlled")
+		return ctrl.Result{}, nil
 	}
 
 	for _, ingress := range ingresses {
