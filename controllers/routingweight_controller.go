@@ -111,8 +111,12 @@ func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Contex
 
 	logger := log.FromContext(ctx)
 	for _, annotation := range routingWeight.Spec.Annotations {
-		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation")
+		value, ok := ingress.Annotations[annotation.Key]
+		if ok {
+			logger.Info(fmt.Sprintf("%s Existing annotation found on ingress: %s:%s", logPrefix, annotation.Key, value), "ingress", ingress.Name)
+		}
 
+		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation", annotation.Value)
 		ingress.Annotations[annotation.Key] = annotation.Value
 	}
 

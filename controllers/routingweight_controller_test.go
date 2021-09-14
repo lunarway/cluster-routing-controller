@@ -78,6 +78,24 @@ func TestRoutingWeightController(t *testing.T) {
 			Spec:   networkingv1.IngressSpec{},
 			Status: networkingv1.IngressStatus{},
 		}
+
+		controlledIngressWithWeights = &networkingv1.Ingress{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Ingress",
+				APIVersion: "networking.k8s.io/v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "controlledIngressWithWeightsName",
+				Namespace: "ingressNamespace",
+				Annotations: map[string]string{
+					"routing.lunar.tech/controlled": "true",
+					"key":                           "value2",
+				},
+			},
+			Spec:   networkingv1.IngressSpec{},
+			Status: networkingv1.IngressStatus{},
+		}
+
 		nonControlledIngress = &networkingv1.Ingress{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Ingress",
@@ -104,14 +122,8 @@ func TestRoutingWeightController(t *testing.T) {
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: metav1.ObjectMeta{
-					Name:      "routingWeight",
-					Namespace: "routingWeightNamespace",
-				}.Namespace,
-				Name: metav1.ObjectMeta{
-					Name:      "routingWeight",
-					Namespace: "routingWeightNamespace",
-				}.Name,
+				Namespace: routingWeightResource.Namespace,
+				Name:      routingWeightResource.Name,
 			},
 		})
 
@@ -131,10 +143,6 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.NoError(t, err)
 
 		assert.Equal(t, expectedAnnotations, actualIngress.Annotations)
-	})
-
-	t.Run("Set annotations on two ingresses when control annotation is set", func(t *testing.T) {
-
 	})
 
 	t.Run("Does not set annotation on controlledIngress when cluster names does not match", func(t *testing.T) {
@@ -230,8 +238,38 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.Equal(t, controlledIngress, actualIngress)
 	})
 
-	t.Run("Updates annotation on controlledIngress when annotation value has changed", func(t *testing.T) {
+	t.Run("Updates annotation on ingress when annotation value has changed", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngressWithWeights)
+		cl := fake.NewClientBuilder().
+			WithObjects(routingWeightResource, controlledIngressWithWeights).
+			Build()
+		sut := createSut(cl, s, clusterName)
 
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: routingWeightResource.Namespace,
+				Name:      routingWeightResource.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		expectedAnnotations := map[string]string{
+			"key":                           "value",
+			"routing.lunar.tech/controlled": "true",
+		}
+
+		actualIngress := &networkingv1.Ingress{}
+		err = cl.Get(ctx, types.NamespacedName{
+			Name:      controlledIngressWithWeights.Name,
+			Namespace: controlledIngressWithWeights.Namespace,
+		}, actualIngress)
+		assert.NoError(t, err)
+
+		assert.Equal(t, expectedAnnotations, actualIngress.Annotations)
 	})
 
 	t.Run("Does nothing when no ingresses exist", func(t *testing.T) {
