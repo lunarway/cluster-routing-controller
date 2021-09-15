@@ -44,6 +44,36 @@ func TestIngressController(t *testing.T) {
 			Status: v1alpha1.RoutingWeightStatus{},
 		}
 
+		dryRunRoutingWeightResource = &v1alpha1.RoutingWeight{
+			TypeMeta: typeMeta,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dryRunRoutingWeight",
+				Namespace: "routingWeightNamespace",
+			},
+			Spec: v1alpha1.RoutingWeightSpec{
+				ClusterName: clusterName,
+				DryRun:      true,
+				Annotations: []v1alpha1.Annotation{annotation},
+			},
+			Status: v1alpha1.RoutingWeightStatus{},
+		}
+
+		controlledIngress = &networkingv1.Ingress{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Ingress",
+				APIVersion: "networking.k8s.io/v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "controlledIngressName",
+				Namespace: "ingressNamespace",
+				Annotations: map[string]string{
+					"routing.lunar.tech/controlled": "true",
+				},
+			},
+			Spec:   networkingv1.IngressSpec{},
+			Status: networkingv1.IngressStatus{},
+		}
+
 		nonControlledIngress = &networkingv1.Ingress{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Ingress",
@@ -88,23 +118,151 @@ func TestIngressController(t *testing.T) {
 	})
 
 	t.Run("Controlled Ingress is keept unchanged when no routingWeights are defined", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		cl := fake.NewClientBuilder().
+			WithObjects(controlledIngress).
+			Build()
+		sut := createSut(cl, s, clusterName)
 
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: routingWeightResource.Namespace,
+				Name:      routingWeightResource.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		actualIngress := &networkingv1.Ingress{}
+		err = cl.Get(ctx, types.NamespacedName{
+			Name:      controlledIngress.Name,
+			Namespace: controlledIngress.Namespace,
+		}, actualIngress)
+		assert.NoError(t, err)
+
+		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
 	})
 
 	t.Run("Controlled Ingress is keept unchanged when no local routingWeights are defined", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		cl := fake.NewClientBuilder().
+			WithObjects(controlledIngress).
+			Build()
+		sut := createSut(cl, s, "Another cluster")
 
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: routingWeightResource.Namespace,
+				Name:      routingWeightResource.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		actualIngress := &networkingv1.Ingress{}
+		err = cl.Get(ctx, types.NamespacedName{
+			Name:      controlledIngress.Name,
+			Namespace: controlledIngress.Namespace,
+		}, actualIngress)
+		assert.NoError(t, err)
+
+		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
 	})
 
 	t.Run("Controlled Ingress is keept unchanged when in dryRun mode", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, dryRunRoutingWeightResource)
+		cl := fake.NewClientBuilder().
+			WithObjects(controlledIngress).
+			Build()
+		sut := createSut(cl, s, clusterName)
 
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: routingWeightResource.Namespace,
+				Name:      routingWeightResource.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		actualIngress := &networkingv1.Ingress{}
+		err = cl.Get(ctx, types.NamespacedName{
+			Name:      controlledIngress.Name,
+			Namespace: controlledIngress.Namespace,
+		}, actualIngress)
+		assert.NoError(t, err)
+
+		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
 	})
 
 	t.Run("None controlled Ingress is unchanged when local routingWeights are defined", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		cl := fake.NewClientBuilder().
+			WithObjects(nonControlledIngress).
+			Build()
+		sut := createSut(cl, s, clusterName)
 
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: routingWeightResource.Namespace,
+				Name:      routingWeightResource.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		actualIngress := &networkingv1.Ingress{}
+		err = cl.Get(ctx, types.NamespacedName{
+			Name:      nonControlledIngress.Name,
+			Namespace: nonControlledIngress.Namespace,
+		}, actualIngress)
+		assert.NoError(t, err)
+
+		assert.Equal(t, nonControlledIngress.Annotations, actualIngress.Annotations)
 	})
 
 	t.Run("Controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		cl := fake.NewClientBuilder().
+			WithObjects(routingWeightResource, controlledIngress).
+			Build()
+		sut := createSut(cl, s, clusterName)
 
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: routingWeightResource.Namespace,
+				Name:      routingWeightResource.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		expectedAnnotations := map[string]string{
+			"key":                           "value",
+			"routing.lunar.tech/controlled": "true",
+		}
+
+		actualIngress := &networkingv1.Ingress{}
+		err = cl.Get(ctx, types.NamespacedName{
+			Name:      controlledIngress.Name,
+			Namespace: controlledIngress.Namespace,
+		}, actualIngress)
+		assert.NoError(t, err)
+
+		assert.Equal(t, expectedAnnotations, actualIngress.Annotations)
 	})
 
 }
