@@ -55,17 +55,3 @@ func IsIngressControlled(ingress networkingv1.Ingress) bool {
 
 	return ok && value == "true"
 }
-
-func GetControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress {
-	var ingresses []networkingv1.Ingress
-
-	for _, ingress := range items {
-		if !IsIngressControlled(ingress) {
-			continue
-		}
-
-		ingresses = append(ingresses, ingress)
-	}
-
-	return ingresses
-}
