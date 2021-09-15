@@ -18,9 +18,9 @@ package routing
 
 import (
 	"context"
-	"fmt"
 
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
+	"github/lunarway/cluster-routing-controller/internal/operator"
 
 	networkingv1 "k8s.io/api/networking/v1"
 
@@ -30,10 +30,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
-)
-
-const (
-	controlledByAnnotationKey = "routing.lunar.tech/controlled"
 )
 
 // RoutingWeightReconciler reconciles a RoutingWeight object
@@ -74,8 +70,8 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
-	if routingWeight.Spec.ClusterName != r.ClusterName {
+	logger.Info("Reconciling RoutingWeight", "routingWeight", routingWeight.Name)
+	if !operator.IsLocalClusterName(routingWeight, r.ClusterName) {
 		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
 		return ctrl.Result{}, nil
 	}
@@ -86,14 +82,14 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	ingresses := getControlledIngresses(ingressList.Items)
+	ingresses := operator.GetControlledIngresses(ingressList.Items)
 	if len(ingresses) == 0 {
 		logger.Info("Found no ingresses to be controlled")
 		return ctrl.Result{}, nil
 	}
 
 	for _, ingress := range ingresses {
-		err = r.setRoutingWeightAnnotations(ctx, ingress, routingWeight)
+		err = operator.SetRoutingWeightAnnotations(ctx, r.Client, ingress, routingWeight)
 		if err != nil {
 			logger.Error(err, "failed setting routing weight annotations on ingress", "ingress", ingress.Namespace)
 			return reconcile.Result{}, err
@@ -101,52 +97,6 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *RoutingWeightReconciler) setRoutingWeightAnnotations(ctx context.Context, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
-	logPrefix := "dryRun=false"
-	if routingWeight.Spec.DryRun {
-		logPrefix = "dryRun=true"
-	}
-
-	logger := log.FromContext(ctx)
-	for _, annotation := range routingWeight.Spec.Annotations {
-		value, ok := ingress.Annotations[annotation.Key]
-		if ok {
-			logger.Info(fmt.Sprintf("%s Existing annotation found on ingress: %s:'%s'", logPrefix, annotation.Key, value), "ingress", ingress.Name)
-		}
-
-		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation", annotation.Value)
-		ingress.Annotations[annotation.Key] = annotation.Value
-	}
-
-	logger.Info(fmt.Sprintf("%s Updating ingress object in api server", logPrefix))
-	if routingWeight.Spec.DryRun {
-		logger.Info(fmt.Sprintf("%s Dryrun of change. Doing nothing", logPrefix))
-		return nil
-	}
-
-	err := r.Update(ctx, &ingress)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress {
-	var ingresses []networkingv1.Ingress
-
-	for _, ingress := range items {
-		value, ok := ingress.Annotations[controlledByAnnotationKey]
-		if !ok || value != "true" {
-			continue
-		}
-
-		ingresses = append(ingresses, ingress)
-	}
-
-	return ingresses
 }
 
 // SetupWithManager sets up the controller with the Manager.
