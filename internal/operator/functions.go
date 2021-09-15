@@ -15,11 +15,11 @@ const (
 	controlledByAnnotationKey = "routing.lunar.tech/controlled"
 )
 
-func IsLocalClusterName(routingWeight *routingv1alpha1.RoutingWeight, clusterName string) bool {
+func IsLocalClusterName(routingWeight routingv1alpha1.RoutingWeight, clusterName string) bool {
 	return routingWeight.Spec.ClusterName == clusterName
 }
 
-func SetRoutingWeightAnnotations(ctx context.Context, apiClient client.Client, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
+func SetRoutingWeightAnnotations(ctx context.Context, apiClient client.Client, ingress networkingv1.Ingress, routingWeight routingv1alpha1.RoutingWeight) error {
 	logPrefix := "dryRun=false"
 	if routingWeight.Spec.DryRun {
 		logPrefix = "dryRun=true"
@@ -54,18 +54,4 @@ func IsIngressControlled(ingress networkingv1.Ingress) bool {
 	value, ok := ingress.Annotations[controlledByAnnotationKey]
 
 	return ok && value == "true"
-}
-
-func GetControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress {
-	var ingresses []networkingv1.Ingress
-
-	for _, ingress := range items {
-		if !IsIngressControlled(ingress) {
-			continue
-		}
-
-		ingresses = append(ingresses, ingress)
-	}
-
-	return ingresses
 }
