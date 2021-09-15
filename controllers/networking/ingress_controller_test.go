@@ -92,6 +92,7 @@ func TestIngressController(t *testing.T) {
 	t.Run("None controlled Ingress is keept unchanged", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		cl := fake.NewClientBuilder().
 			WithObjects(nonControlledIngress).
 			Build()
@@ -99,8 +100,8 @@ func TestIngressController(t *testing.T) {
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: routingWeightResource.Namespace,
-				Name:      routingWeightResource.Name,
+				Namespace: nonControlledIngress.Namespace,
+				Name:      nonControlledIngress.Name,
 			},
 		})
 
@@ -120,6 +121,8 @@ func TestIngressController(t *testing.T) {
 	t.Run("Controlled Ingress is keept unchanged when no routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		cl := fake.NewClientBuilder().
 			WithObjects(controlledIngress).
 			Build()
@@ -127,8 +130,8 @@ func TestIngressController(t *testing.T) {
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: routingWeightResource.Namespace,
-				Name:      routingWeightResource.Name,
+				Namespace: controlledIngress.Namespace,
+				Name:      controlledIngress.Name,
 			},
 		})
 
@@ -148,6 +151,8 @@ func TestIngressController(t *testing.T) {
 	t.Run("Controlled Ingress is keept unchanged when no local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		cl := fake.NewClientBuilder().
 			WithObjects(controlledIngress).
 			Build()
@@ -155,8 +160,8 @@ func TestIngressController(t *testing.T) {
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: routingWeightResource.Namespace,
-				Name:      routingWeightResource.Name,
+				Namespace: controlledIngress.Namespace,
+				Name:      controlledIngress.Name,
 			},
 		})
 
@@ -176,6 +181,7 @@ func TestIngressController(t *testing.T) {
 	t.Run("Controlled Ingress is keept unchanged when in dryRun mode", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(v1alpha1.GroupVersion, dryRunRoutingWeightResource)
 		cl := fake.NewClientBuilder().
 			WithObjects(controlledIngress).
@@ -184,8 +190,8 @@ func TestIngressController(t *testing.T) {
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: routingWeightResource.Namespace,
-				Name:      routingWeightResource.Name,
+				Namespace: controlledIngress.Namespace,
+				Name:      controlledIngress.Name,
 			},
 		})
 
@@ -205,6 +211,7 @@ func TestIngressController(t *testing.T) {
 	t.Run("None controlled Ingress is unchanged when local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		cl := fake.NewClientBuilder().
 			WithObjects(nonControlledIngress).
@@ -213,8 +220,8 @@ func TestIngressController(t *testing.T) {
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: routingWeightResource.Namespace,
-				Name:      routingWeightResource.Name,
+				Namespace: nonControlledIngress.Namespace,
+				Name:      nonControlledIngress.Name,
 			},
 		})
 
@@ -234,6 +241,7 @@ func TestIngressController(t *testing.T) {
 	t.Run("Controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
 		cl := fake.NewClientBuilder().
 			WithObjects(routingWeightResource, controlledIngress).
@@ -242,8 +250,8 @@ func TestIngressController(t *testing.T) {
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: routingWeightResource.Namespace,
-				Name:      routingWeightResource.Name,
+				Namespace: controlledIngress.Namespace,
+				Name:      controlledIngress.Name,
 			},
 		})
 
