@@ -97,12 +97,16 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	if len(localRoutingWeights) > 1 {
+	if len(localRoutingWeights) != 1 {
 		logger.Error(fmt.Errorf("more than one local cluster routing weight found"), "Existing due to possible conflicts in annotations")
 		return reconcile.Result{}, err
 	}
 
-	// Set annotations
+	err = operator.SetRoutingWeightAnnotations(ctx, r.Client, *ingress, localRoutingWeights[0])
+	if err != nil {
+		logger.Error(err, "set annotations")
+		return reconcile.Result{}, err
+	}
 
 	return ctrl.Result{}, nil
 }

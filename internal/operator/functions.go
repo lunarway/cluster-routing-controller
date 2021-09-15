@@ -19,7 +19,7 @@ func IsLocalClusterName(routingWeight routingv1alpha1.RoutingWeight, clusterName
 	return routingWeight.Spec.ClusterName == clusterName
 }
 
-func SetRoutingWeightAnnotations(ctx context.Context, apiClient client.Client, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
+func SetRoutingWeightAnnotations(ctx context.Context, apiClient client.Client, ingress networkingv1.Ingress, routingWeight routingv1alpha1.RoutingWeight) error {
 	logPrefix := "dryRun=false"
 	if routingWeight.Spec.DryRun {
 		logPrefix = "dryRun=true"
