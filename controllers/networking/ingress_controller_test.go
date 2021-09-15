@@ -93,6 +93,7 @@ func TestIngressController(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		cl := fake.NewClientBuilder().
 			WithObjects(nonControlledIngress).
 			Build()
