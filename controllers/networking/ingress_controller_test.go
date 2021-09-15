@@ -185,7 +185,7 @@ func TestIngressController(t *testing.T) {
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(v1alpha1.GroupVersion, dryRunRoutingWeightResource)
 		cl := fake.NewClientBuilder().
-			WithObjects(controlledIngress).
+			WithObjects(controlledIngress, dryRunRoutingWeightResource).
 			Build()
 		sut := createSut(cl, s, clusterName)
 
@@ -215,7 +215,7 @@ func TestIngressController(t *testing.T) {
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		cl := fake.NewClientBuilder().
-			WithObjects(nonControlledIngress).
+			WithObjects(nonControlledIngress, routingWeightResource).
 			Build()
 		sut := createSut(cl, s, clusterName)
 
