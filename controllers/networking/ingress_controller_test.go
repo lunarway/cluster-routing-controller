@@ -155,7 +155,7 @@ func TestIngressController(t *testing.T) {
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		cl := fake.NewClientBuilder().
-			WithObjects(controlledIngress).
+			WithObjects(controlledIngress, routingWeightResourc).
 			Build()
 		sut := createSut(cl, s, "Another cluster")
 
