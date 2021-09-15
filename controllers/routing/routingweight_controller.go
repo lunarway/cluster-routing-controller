@@ -71,15 +71,15 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	logger.Info("Reconciling RoutingWeight", "routingWeight", routingWeight.Name)
-	if !operator.IsLocalClusterName(routingWeight, r.ClusterName) {
+	if !operator.IsLocalClusterName(*routingWeight, r.ClusterName) {
 		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
 		return ctrl.Result{}, nil
 	}
 
-	ingressList := &networkingv1.IngressList{}
-	if err := r.List(ctx, ingressList); err != nil {
-		logger.Error(err, "Failed to list ingresses")
-		return ctrl.Result{}, err
+	ingressList, err := r.getIngressList(ctx)
+	if err != nil {
+		logger.Error(err, "get ingressList")
+		return reconcile.Result{}, err
 	}
 
 	ingresses := operator.GetControlledIngresses(ingressList.Items)
@@ -97,6 +97,14 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	return ctrl.Result{}, nil
+}
+
+func (r *RoutingWeightReconciler) getIngressList(ctx context.Context) (*networkingv1.IngressList, error) {
+	ingressList := &networkingv1.IngressList{}
+	if err := r.List(ctx, ingressList); err != nil {
+		return nil, err
+	}
+	return ingressList, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

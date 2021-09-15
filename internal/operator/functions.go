@@ -15,7 +15,7 @@ const (
 	controlledByAnnotationKey = "routing.lunar.tech/controlled"
 )
 
-func IsLocalClusterName(routingWeight *routingv1alpha1.RoutingWeight, clusterName string) bool {
+func IsLocalClusterName(routingWeight routingv1alpha1.RoutingWeight, clusterName string) bool {
 	return routingWeight.Spec.ClusterName == clusterName
 }
 
