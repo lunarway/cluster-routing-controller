@@ -16,7 +16,7 @@ const (
 )
 
 func IsLocalClusterName(routingWeight *routingv1alpha1.RoutingWeight, clusterName string) bool {
-	return routingWeight.Spec.ClusterName != clusterName
+	return routingWeight.Spec.ClusterName == clusterName
 }
 
 func SetRoutingWeightAnnotations(ctx context.Context, apiClient client.Client, ingress networkingv1.Ingress, routingWeight *routingv1alpha1.RoutingWeight) error {
