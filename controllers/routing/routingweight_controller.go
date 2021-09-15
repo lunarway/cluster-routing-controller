@@ -20,7 +20,7 @@ import (
 	"context"
 
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
-	"github/lunarway/cluster-routing-controller/controllers"
+	"github/lunarway/cluster-routing-controller/internal/operator"
 
 	networkingv1 "k8s.io/api/networking/v1"
 
@@ -71,7 +71,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	logger.Info("Reconciling RoutingWeight: %s", routingWeight.ClusterName)
-	if controllers.IsLocalClusterName(routingWeight, r.ClusterName) {
+	if operator.IsLocalClusterName(routingWeight, r.ClusterName) {
 		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
 		return ctrl.Result{}, nil
 	}
@@ -82,14 +82,14 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, err
 	}
 
-	ingresses := controllers.GetControlledIngresses(ingressList.Items)
+	ingresses := operator.GetControlledIngresses(ingressList.Items)
 	if len(ingresses) == 0 {
 		logger.Info("Found no ingresses to be controlled")
 		return ctrl.Result{}, nil
 	}
 
 	for _, ingress := range ingresses {
-		err = controllers.SetRoutingWeightAnnotations(ctx, r.Client, ingress, routingWeight)
+		err = operator.SetRoutingWeightAnnotations(ctx, r.Client, ingress, routingWeight)
 		if err != nil {
 			logger.Error(err, "failed setting routing weight annotations on ingress", "ingress", ingress.Namespace)
 			return reconcile.Result{}, err
