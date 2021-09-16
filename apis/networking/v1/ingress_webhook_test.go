@@ -49,6 +49,36 @@ func TestIngressAnnotator(t *testing.T) {
 			Status: v1alpha1.RoutingWeightStatus{},
 		}
 
+		dryRunRoutingWeightResource = &v1alpha1.RoutingWeight{
+			TypeMeta: typeMeta,
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "dryRunRoutingWeight",
+				Namespace: "routingWeightNamespace",
+			},
+			Spec: v1alpha1.RoutingWeightSpec{
+				ClusterName: clusterName,
+				DryRun:      true,
+				Annotations: []v1alpha1.Annotation{annotation},
+			},
+			Status: v1alpha1.RoutingWeightStatus{},
+		}
+
+		controlledIngress = &networkingv1.Ingress{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Ingress",
+				APIVersion: "networking.k8s.io/v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "controlledIngressName",
+				Namespace: "ingressNamespace",
+				Annotations: map[string]string{
+					"routing.lunar.tech/controlled": "true",
+				},
+			},
+			Spec:   networkingv1.IngressSpec{},
+			Status: networkingv1.IngressStatus{},
+		}
+
 		nonControlledIngress = &networkingv1.Ingress{
 			TypeMeta: metav1.TypeMeta{
 				Kind:       "Ingress",
@@ -87,20 +117,93 @@ func TestIngressAnnotator(t *testing.T) {
 				},
 			},
 		})
+
 		assert.True(t, result.Allowed)
 		assert.Nil(t, result.PatchType)
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when no routingWeights are defined", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
+		cl := fake.NewClientBuilder().
+			WithObjects().
+			Build()
+		sut, err := createSut(cl, s, clusterName)
+		assert.NoError(t, err)
 
+		marshalledIngress, err := json.Marshal(controlledIngress)
+		assert.NoError(t, err)
+
+		result := sut.Handle(ctx, admission.Request{
+			AdmissionRequest: admissionv1.AdmissionRequest{
+				Operation: admissionv1.Create,
+				Object: runtime.RawExtension{
+					Raw:    marshalledIngress,
+					Object: controlledIngress,
+				},
+			},
+		})
+
+		assert.True(t, result.Allowed)
+		assert.Nil(t, result.PatchType)
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
+		cl := fake.NewClientBuilder().
+			WithObjects(routingWeightResource).
+			Build()
+		sut, err := createSut(cl, s, "Another Cluster")
+		assert.NoError(t, err)
 
+		marshalledIngress, err := json.Marshal(controlledIngress)
+		assert.NoError(t, err)
+
+		result := sut.Handle(ctx, admission.Request{
+			AdmissionRequest: admissionv1.AdmissionRequest{
+				Operation: admissionv1.Create,
+				Object: runtime.RawExtension{
+					Raw:    marshalledIngress,
+					Object: controlledIngress,
+				},
+			},
+		})
+
+		assert.True(t, result.Allowed)
+		assert.Nil(t, result.PatchType)
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when in dryRun mode", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, dryRunRoutingWeightResource)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
+		cl := fake.NewClientBuilder().
+			WithObjects(dryRunRoutingWeightResource).
+			Build()
+		sut, err := createSut(cl, s, clusterName)
+		assert.NoError(t, err)
 
+		marshalledIngress, err := json.Marshal(controlledIngress)
+		assert.NoError(t, err)
+
+		result := sut.Handle(ctx, admission.Request{
+			AdmissionRequest: admissionv1.AdmissionRequest{
+				Operation: admissionv1.Create,
+				Object: runtime.RawExtension{
+					Raw:    marshalledIngress,
+					Object: controlledIngress,
+				},
+			},
+		})
+
+		assert.True(t, result.Allowed)
+		assert.Nil(t, result.PatchType)
 	})
 
 	t.Run("None controlled Ingress is kept unchanged when local routingWeights are defined", func(t *testing.T) {
