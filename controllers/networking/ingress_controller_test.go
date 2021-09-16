@@ -89,7 +89,7 @@ func TestIngressController(t *testing.T) {
 		ctx = context.Background()
 	)
 
-	t.Run("None controlled Ingress is keept unchanged", func(t *testing.T) {
+	t.Run("None controlled Ingress is kept unchanged", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
@@ -119,7 +119,7 @@ func TestIngressController(t *testing.T) {
 		assert.Equal(t, nonControlledIngress.Annotations, actualIngress.Annotations)
 	})
 
-	t.Run("Controlled Ingress is keept unchanged when no routingWeights are defined", func(t *testing.T) {
+	t.Run("Controlled Ingress is kept unchanged when no routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
@@ -149,7 +149,7 @@ func TestIngressController(t *testing.T) {
 		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
 	})
 
-	t.Run("Controlled Ingress is keept unchanged when no local routingWeights are defined", func(t *testing.T) {
+	t.Run("Controlled Ingress is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
@@ -179,7 +179,7 @@ func TestIngressController(t *testing.T) {
 		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
 	})
 
-	t.Run("Controlled Ingress is keept unchanged when in dryRun mode", func(t *testing.T) {
+	t.Run("Controlled Ingress is kept unchanged when in dryRun mode", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
@@ -209,7 +209,7 @@ func TestIngressController(t *testing.T) {
 		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
 	})
 
-	t.Run("None controlled Ingress is unchanged when local routingWeights are defined", func(t *testing.T) {
+	t.Run("None controlled Ingress is kept unchanged when local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
