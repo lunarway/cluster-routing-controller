@@ -89,16 +89,11 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	for _, ingress := range ingresses {
-		ingresPtr := &ingress
-		err = operator.SetIngressAnnotations(ctx, ingresPtr, *routingWeight)
-		if err != nil {
-			logger.Error(err, "set ingress annotations", "ingress", ingress.Namespace)
-			return reconcile.Result{}, err
-		}
+		ingressPtr := &ingress
+		operator.SetIngressAnnotations(ctx, ingressPtr, *routingWeight)
 
-		err = operator.UpdateIngress(ctx, r.Client, ingresPtr)
+		err = operator.UpdateIngress(ctx, r.Client, routingWeight.Spec.DryRun, ingressPtr)
 		if err != nil {
-			logger.Error(err, "update ingress")
 			return reconcile.Result{}, err
 		}
 	}

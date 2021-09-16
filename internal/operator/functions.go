@@ -15,15 +15,33 @@ const (
 	controlledByAnnotationKey = "routing.lunar.tech/controlled"
 )
 
+func logPrefix(dryRun bool) string {
+	logPrefix := "dryRun=false"
+	if dryRun {
+		logPrefix = "dryRun=true"
+	}
+
+	return logPrefix
+}
+
 func IsLocalClusterName(routingWeight routingv1alpha1.RoutingWeight, clusterName string) bool {
 	return routingWeight.Spec.ClusterName == clusterName
 }
 
-func UpdateIngress(ctx context.Context, apiClient client.Client, ingress *networkingv1.Ingress) error {
+func UpdateIngress(ctx context.Context, apiClient client.Client, dryRun bool, ingress *networkingv1.Ingress) error {
+	logger := log.FromContext(ctx)
+	logPrefix := logPrefix(dryRun)
+
+	logger.Info(fmt.Sprintf("%s Updating ingress object in api server", logPrefix))
+	if dryRun {
+		logger.Info(fmt.Sprintf("%s Dryrun of change. Doing nothing", logPrefix))
+		return nil
+	}
+
 	return apiClient.Update(ctx, ingress)
 }
 
-func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, routingWeight routingv1alpha1.RoutingWeight) error {
+func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, routingWeight routingv1alpha1.RoutingWeight) {
 	logPrefix := "dryRun=false"
 	if routingWeight.Spec.DryRun {
 		logPrefix = "dryRun=true"
@@ -39,14 +57,6 @@ func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, r
 		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation", annotation.Value)
 		ingress.Annotations[annotation.Key] = annotation.Value
 	}
-
-	logger.Info(fmt.Sprintf("%s Updating ingress object in api server", logPrefix))
-	if routingWeight.Spec.DryRun {
-		logger.Info(fmt.Sprintf("%s Dryrun of change. Doing nothing", logPrefix))
-		return nil
-	}
-
-	return nil
 }
 
 func IsIngressControlled(ingress networkingv1.Ingress) bool {

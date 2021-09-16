@@ -65,7 +65,6 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			return reconcile.Result{}, nil
 		}
 
-		logger.Error(err, "fetch ingress from kubernetes API")
 		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
@@ -77,7 +76,6 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	routingWeights, err := r.getRoutingWeightList(ctx)
 	if err != nil {
-		logger.Error(err, "get routingWeights")
 		return reconcile.Result{}, err
 	}
 
@@ -98,19 +96,14 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	if len(localRoutingWeights) != 1 {
-		logger.Error(fmt.Errorf("more than one local cluster routing weight found"), "Existing due to possible conflicts in annotations")
-		return reconcile.Result{}, err
+		return reconcile.Result{}, fmt.Errorf("more than one local cluster routing weight found, existing due to possible conflicts in annotations")
 	}
 
-	err = operator.SetIngressAnnotations(ctx, ingress, localRoutingWeights[0])
-	if err != nil {
-		logger.Error(err, "set annotations")
-		return reconcile.Result{}, err
-	}
+	routingWeight := localRoutingWeights[0]
+	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
 
-	err = operator.UpdateIngress(ctx, r.Client, ingress)
+	err = operator.UpdateIngress(ctx, r.Client, routingWeight.Spec.DryRun, ingress)
 	if err != nil {
-		logger.Error(err, "update ingress")
 		return reconcile.Result{}, err
 	}
 
