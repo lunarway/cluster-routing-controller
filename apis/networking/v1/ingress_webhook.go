@@ -23,6 +23,8 @@ import (
 
 	"github/lunarway/cluster-routing-controller/internal/operator"
 
+	admissionv1 "k8s.io/api/admission/v1"
+
 	networkingv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -51,6 +53,10 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	ingresslog.Info("IngressAnnotator found Ingress", "ingress", ingress.Name)
+	if req.Operation != admissionv1.Create {
+		return admission.Allowed("not a create operation")
+	}
+
 	_, _, err = operator.HandleIngress(ctx, a.Client, a.ClusterName, ingress)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
