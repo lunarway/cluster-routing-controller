@@ -90,6 +90,26 @@ func TestIngressAnnotator(t *testing.T) {
 		assert.True(t, result.Allowed)
 		assert.Nil(t, result.PatchType)
 	})
+
+	t.Run("Controlled Ingress is kept unchanged when no routingWeights are defined", func(t *testing.T) {
+
+	})
+
+	t.Run("Controlled Ingress is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
+
+	})
+
+	t.Run("Controlled Ingress is kept unchanged when in dryRun mode", func(t *testing.T) {
+
+	})
+
+	t.Run("None controlled Ingress is kept unchanged when local routingWeights are defined", func(t *testing.T) {
+
+	})
+
+	t.Run("Controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
+
+	})
 }
 
 func createSut(cl client.WithWatch, scheme *runtime.Scheme, clusterName string) (*IngressAnnotator, error) {
