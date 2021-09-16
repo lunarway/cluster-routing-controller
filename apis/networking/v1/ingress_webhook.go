@@ -40,7 +40,6 @@ func (a *IngressAnnotator) InjectDecoder(d *admission.Decoder) error {
 	return nil
 }
 
-// EDIT THIS FILE!  THIS IS SCAFFOLDING FOR YOU TO OWN!
 func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
 	ingress := &networkingv1.Ingress{}
 	err := a.decoder.Decode(req, ingress)
@@ -48,14 +47,13 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	// mutate the fields in ingress
-	ingresslog.Info("Admissionhook found Ingress", "ingress", ingress.Name)
+	ingresslog.Info("IngressAnnotator found Ingress", "ingress", ingress.Name)
 
-	marshaledingress, err := json.Marshal(ingress)
+	marshalledIngress, err := json.Marshal(ingress)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
-	return admission.PatchResponseFromRaw(req.Object.Raw, marshaledingress)
+	return admission.PatchResponseFromRaw(req.Object.Raw, marshalledIngress)
 }
 
 //+kubebuilder:webhook:path=/mutate-networking-k8s-io-v1-ingress,mutating=true,failurePolicy=fail,sideEffects=None,groups=networking.k8s.io,resources=ingresses,verbs=create;update,versions=v1,name=mingress.kb.io,admissionReviewVersions={v1,v1beta1}

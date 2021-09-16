@@ -19,7 +19,11 @@ func IsLocalClusterName(routingWeight routingv1alpha1.RoutingWeight, clusterName
 	return routingWeight.Spec.ClusterName == clusterName
 }
 
-func SetRoutingWeightAnnotations(ctx context.Context, apiClient client.Client, ingress networkingv1.Ingress, routingWeight routingv1alpha1.RoutingWeight) error {
+func UpdateIngress(ctx context.Context, apiClient client.Client, ingress *networkingv1.Ingress) error {
+	return apiClient.Update(ctx, ingress)
+}
+
+func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, routingWeight routingv1alpha1.RoutingWeight) error {
 	logPrefix := "dryRun=false"
 	if routingWeight.Spec.DryRun {
 		logPrefix = "dryRun=true"
@@ -40,11 +44,6 @@ func SetRoutingWeightAnnotations(ctx context.Context, apiClient client.Client, i
 	if routingWeight.Spec.DryRun {
 		logger.Info(fmt.Sprintf("%s Dryrun of change. Doing nothing", logPrefix))
 		return nil
-	}
-
-	err := apiClient.Update(ctx, &ingress)
-	if err != nil {
-		return err
 	}
 
 	return nil

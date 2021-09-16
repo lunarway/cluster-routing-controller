@@ -89,9 +89,16 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	for _, ingress := range ingresses {
-		err = operator.SetRoutingWeightAnnotations(ctx, r.Client, ingress, *routingWeight)
+		ingresPtr := &ingress
+		err = operator.SetIngressAnnotations(ctx, ingresPtr, *routingWeight)
 		if err != nil {
-			logger.Error(err, "failed setting routing weight annotations on ingress", "ingress", ingress.Namespace)
+			logger.Error(err, "set ingress annotations", "ingress", ingress.Namespace)
+			return reconcile.Result{}, err
+		}
+
+		err = operator.UpdateIngress(ctx, r.Client, ingresPtr)
+		if err != nil {
+			logger.Error(err, "update ingress")
 			return reconcile.Result{}, err
 		}
 	}

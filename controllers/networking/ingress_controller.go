@@ -102,9 +102,15 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
-	err = operator.SetRoutingWeightAnnotations(ctx, r.Client, *ingress, localRoutingWeights[0])
+	err = operator.SetIngressAnnotations(ctx, ingress, localRoutingWeights[0])
 	if err != nil {
 		logger.Error(err, "set annotations")
+		return reconcile.Result{}, err
+	}
+
+	err = operator.UpdateIngress(ctx, r.Client, ingress)
+	if err != nil {
+		logger.Error(err, "update ingress")
 		return reconcile.Result{}, err
 	}
 
