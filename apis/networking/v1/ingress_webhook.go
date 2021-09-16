@@ -21,6 +21,8 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github/lunarway/cluster-routing-controller/internal/operator"
+
 	networkingv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -31,8 +33,9 @@ import (
 var ingresslog = logf.Log.WithName("ingress-resource")
 
 type IngressAnnotator struct {
-	Client  client.Client
-	decoder *admission.Decoder
+	Client      client.Client
+	decoder     *admission.Decoder
+	ClusterName string
 }
 
 func (a *IngressAnnotator) InjectDecoder(d *admission.Decoder) error {
@@ -48,6 +51,10 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	ingresslog.Info("IngressAnnotator found Ingress", "ingress", ingress.Name)
+	_, _, err = operator.HandleIngress(ctx, a.Client, a.ClusterName, ingress)
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
+	}
 
 	marshalledIngress, err := json.Marshal(ingress)
 	if err != nil {
