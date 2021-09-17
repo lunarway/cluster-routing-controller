@@ -102,7 +102,7 @@ func HandleIngress(ctx context.Context, client client.Client, clusterName string
 	routingWeight := localRoutingWeights[0]
 	SetIngressAnnotations(ctx, ingress, routingWeight)
 
-	return routingWeight, true, nil
+	return routingWeight, !routingWeight.Spec.DryRun, nil
 }
 
 func GetRoutingWeightList(ctx context.Context, client client.Client) (*v1alpha1.RoutingWeightList, error) {
