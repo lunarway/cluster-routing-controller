@@ -260,6 +260,7 @@ func TestIngressAnnotator(t *testing.T) {
 
 		assert.True(t, result.Allowed)
 		assert.NotNil(t, result.Patches)
+		assert.Len(t, result.Patches, 1)
 	})
 }
 
