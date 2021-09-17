@@ -119,7 +119,7 @@ func TestIngressAnnotator(t *testing.T) {
 		})
 
 		assert.True(t, result.Allowed)
-		assert.Nil(t, result.PatchType)
+		assert.Nil(t, result.Patches)
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when no routingWeights are defined", func(t *testing.T) {
@@ -147,7 +147,7 @@ func TestIngressAnnotator(t *testing.T) {
 		})
 
 		assert.True(t, result.Allowed)
-		assert.Nil(t, result.PatchType)
+		assert.Nil(t, result.Patches)
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
@@ -175,7 +175,7 @@ func TestIngressAnnotator(t *testing.T) {
 		})
 
 		assert.True(t, result.Allowed)
-		assert.Nil(t, result.PatchType)
+		assert.Nil(t, result.Patches)
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when in dryRun mode", func(t *testing.T) {
@@ -203,7 +203,7 @@ func TestIngressAnnotator(t *testing.T) {
 		})
 
 		assert.True(t, result.Allowed)
-		assert.Nil(t, result.PatchType)
+		assert.Nil(t, result.Patches)
 	})
 
 	t.Run("None controlled Ingress is kept unchanged when local routingWeights are defined", func(t *testing.T) {
@@ -231,7 +231,7 @@ func TestIngressAnnotator(t *testing.T) {
 		})
 
 		assert.True(t, result.Allowed)
-		assert.Nil(t, result.PatchType)
+		assert.Nil(t, result.Patches)
 	})
 
 	t.Run("Controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
@@ -259,7 +259,7 @@ func TestIngressAnnotator(t *testing.T) {
 		})
 
 		assert.True(t, result.Allowed)
-		assert.NotNil(t, result.PatchType)
+		assert.NotNil(t, result.Patches)
 	})
 }
 
