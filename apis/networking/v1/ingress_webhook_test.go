@@ -207,7 +207,31 @@ func TestIngressAnnotator(t *testing.T) {
 	})
 
 	t.Run("None controlled Ingress is kept unchanged when local routingWeights are defined", func(t *testing.T) {
+		s := scheme.Scheme
+		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
+		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
+		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
+		cl := fake.NewClientBuilder().
+			WithObjects(routingWeightResource).
+			Build()
+		sut, err := createSut(cl, s, clusterName)
+		assert.NoError(t, err)
 
+		marshalledIngress, err := json.Marshal(nonControlledIngress)
+		assert.NoError(t, err)
+
+		result := sut.Handle(ctx, admission.Request{
+			AdmissionRequest: admissionv1.AdmissionRequest{
+				Operation: admissionv1.Create,
+				Object: runtime.RawExtension{
+					Raw:    marshalledIngress,
+					Object: controlledIngress,
+				},
+			},
+		})
+
+		assert.True(t, result.Allowed)
+		assert.Nil(t, result.PatchType)
 	})
 
 	t.Run("Controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
