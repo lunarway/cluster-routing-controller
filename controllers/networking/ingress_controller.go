@@ -21,6 +21,8 @@ import (
 
 	"github/lunarway/cluster-routing-controller/internal/operator"
 
+	"sigs.k8s.io/controller-runtime/pkg/log"
+
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -50,6 +52,8 @@ type IngressReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+	logger := log.FromContext(ctx)
+
 	ingress := &networkingv1.Ingress{}
 	err := r.Get(ctx, req.NamespacedName, ingress)
 	if err != nil {
@@ -60,6 +64,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
+	logger.Info("IngressController found Ingress", "ingress", ingress.Name)
 	updateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, r.Client, r.ClusterName, ingress)
 	if err != nil {
 		return reconcile.Result{}, err
