@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 
 	networkingv1 "k8s.io/api/networking/v1"
@@ -63,4 +64,49 @@ func IsIngressControlled(ingress networkingv1.Ingress) bool {
 	value, ok := ingress.Annotations[controlledByAnnotationKey]
 
 	return ok && value == "true"
+}
+
+func DoesIngressNeedsUpdating(ctx context.Context, client client.Client, clusterName string, ingress *networkingv1.Ingress) (bool, v1alpha1.RoutingWeight, error) {
+	logger := log.FromContext(ctx)
+
+	if !IsIngressControlled(*ingress) {
+		logger.Info("Ingress is not controlled. skipping.", "ingress", ingress.Name)
+		return false, v1alpha1.RoutingWeight{}, nil
+	}
+
+	routingWeights, err := GetRoutingWeightList(ctx, client)
+	if err != nil {
+		return false, v1alpha1.RoutingWeight{}, err
+	}
+
+	// If more than one in cluster, then error
+	var localRoutingWeights []v1alpha1.RoutingWeight
+	for _, routingWeight := range routingWeights.Items {
+		if !IsLocalClusterName(routingWeight, clusterName) {
+			continue
+		}
+
+		logger.Info("Found local cluster routingWeight", "routingWeight", routingWeight.Name)
+		localRoutingWeights = append(localRoutingWeights, routingWeight)
+	}
+
+	if len(localRoutingWeights) == 0 {
+		logger.Info("Found no local routingWeights. skipping.")
+		return false, v1alpha1.RoutingWeight{}, nil
+	}
+
+	if len(localRoutingWeights) != 1 {
+		return false, v1alpha1.RoutingWeight{}, fmt.Errorf("more than one local cluster routing weight found, existing due to possible conflicts in annotations")
+	}
+
+	routingWeight := localRoutingWeights[0]
+	return !routingWeight.Spec.DryRun, routingWeight, nil
+}
+
+func GetRoutingWeightList(ctx context.Context, client client.Client) (*v1alpha1.RoutingWeightList, error) {
+	list := &v1alpha1.RoutingWeightList{}
+	if err := client.List(ctx, list); err != nil {
+		return nil, err
+	}
+	return list, nil
 }

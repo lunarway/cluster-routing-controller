@@ -18,17 +18,16 @@ package networking
 
 import (
 	"context"
-	"fmt"
 
-	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 	"github/lunarway/cluster-routing-controller/internal/operator"
+
+	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
@@ -59,63 +58,25 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	err := r.Get(ctx, req.NamespacedName, ingress)
 	if err != nil {
 		if errors.IsNotFound(err) {
-			// Request object not found, could have been deleted after reconcile request.
-			// Owned objects are automatically garbage collected. For additional cleanup logic use finalizers.
-			// Return and don't requeue
 			return reconcile.Result{}, nil
 		}
 
-		// Error reading the object - requeue the request.
 		return reconcile.Result{}, err
 	}
 
-	if !operator.IsIngressControlled(*ingress) {
-		logger.Info("Ingress is not controlled. skipping.", "ingress", ingress.Name)
-		return ctrl.Result{}, nil
-	}
-
-	routingWeights, err := r.getRoutingWeightList(ctx)
+	logger.Info("IngressController found Ingress", "ingress", ingress.Name)
+	updateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, r.Client, r.ClusterName, ingress)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	// If more than one in cluster, then error
-	var localRoutingWeights []v1alpha1.RoutingWeight
-	for _, routingWeight := range routingWeights.Items {
-		if !operator.IsLocalClusterName(routingWeight, r.ClusterName) {
-			continue
-		}
-
-		logger.Info("Found local cluster routingWeight", "routingWeight", routingWeight.Name)
-		localRoutingWeights = append(localRoutingWeights, routingWeight)
-	}
-
-	if len(localRoutingWeights) == 0 {
-		logger.Info("Found no local routingWeights. skipping.")
-		return ctrl.Result{}, nil
-	}
-
-	if len(localRoutingWeights) != 1 {
-		return reconcile.Result{}, fmt.Errorf("more than one local cluster routing weight found, existing due to possible conflicts in annotations")
-	}
-
-	routingWeight := localRoutingWeights[0]
 	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
-
-	err = operator.UpdateIngress(ctx, r.Client, routingWeight.Spec.DryRun, ingress)
+	err = operator.UpdateIngress(ctx, r.Client, !updateIngress, ingress)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
-}
-
-func (r *IngressReconciler) getRoutingWeightList(ctx context.Context) (*v1alpha1.RoutingWeightList, error) {
-	list := &v1alpha1.RoutingWeightList{}
-	if err := r.List(ctx, list); err != nil {
-		return nil, err
-	}
-	return list, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

@@ -21,6 +21,10 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github/lunarway/cluster-routing-controller/internal/operator"
+
+	admissionv1 "k8s.io/api/admission/v1"
+
 	networkingv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -31,8 +35,9 @@ import (
 var ingresslog = logf.Log.WithName("ingress-resource")
 
 type IngressAnnotator struct {
-	Client  client.Client
-	decoder *admission.Decoder
+	Client      client.Client
+	decoder     *admission.Decoder
+	ClusterName string
 }
 
 func (a *IngressAnnotator) InjectDecoder(d *admission.Decoder) error {
@@ -48,6 +53,20 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	ingresslog.Info("IngressAnnotator found Ingress", "ingress", ingress.Name)
+	if req.Operation != admissionv1.Create {
+		return admission.Allowed("not a create operation")
+	}
+
+	shouldUpdateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, a.Client, a.ClusterName, ingress)
+	if err != nil {
+		return admission.Errored(http.StatusInternalServerError, err)
+	}
+
+	if !shouldUpdateIngress {
+		return admission.Allowed("nothing to add")
+	}
+
+	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
 
 	marshalledIngress, err := json.Marshal(ingress)
 	if err != nil {
