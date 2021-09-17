@@ -57,7 +57,7 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 		return admission.Allowed("not a create operation")
 	}
 
-	_, shouldUpdateIngress, err := operator.HandleIngress(ctx, a.Client, a.ClusterName, ingress)
+	shouldUpdateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, a.Client, a.ClusterName, ingress)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
@@ -65,6 +65,8 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	if !shouldUpdateIngress {
 		return admission.Allowed("nothing to add")
 	}
+
+	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
 
 	marshalledIngress, err := json.Marshal(ingress)
 	if err != nil {

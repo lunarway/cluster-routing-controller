@@ -60,18 +60,15 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
-	routingWeight, updateIngress, err := operator.HandleIngress(ctx, r.Client, r.ClusterName, ingress)
+	updateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, r.Client, r.ClusterName, ingress)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	if updateIngress {
-		err = operator.UpdateIngress(ctx, r.Client, routingWeight.Spec.DryRun, ingress)
-		if err != nil {
-			return reconcile.Result{}, err
-		}
-
-		return ctrl.Result{}, nil
+	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
+	err = operator.UpdateIngress(ctx, r.Client, !updateIngress, ingress)
+	if err != nil {
+		return reconcile.Result{}, err
 	}
 
 	return ctrl.Result{}, nil
