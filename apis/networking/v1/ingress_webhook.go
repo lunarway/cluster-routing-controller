@@ -52,7 +52,7 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 		return admission.Errored(http.StatusBadRequest, err)
 	}
 
-	ingresslog.Info("IngressAnnotator found Ingress", "ingress", ingress.Name)
+	ingresslog.Info("IngressAnnotator found Ingress")
 	if req.Operation != admissionv1.Create {
 		return admission.Allowed("not a create operation")
 	}
