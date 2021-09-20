@@ -53,7 +53,8 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	ingresslog.Info("IngressAnnotator found Ingress")
-	if req.Operation != admissionv1.Create {
+	if req.Operation != admissionv1.Create &&
+		req.Operation != admissionv1.Update {
 		return admission.Allowed("not a create operation")
 	}
 
