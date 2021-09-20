@@ -64,7 +64,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("IngressController found Ingress", "ingress", ingress.Name)
+	logger.Info("IngressController found Ingress")
 	updateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, r.Client, r.ClusterName, ingress)
 	if err != nil {
 		return reconcile.Result{}, err
