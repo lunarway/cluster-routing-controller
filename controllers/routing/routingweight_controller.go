@@ -39,9 +39,7 @@ type RoutingWeightReconciler struct {
 	ClusterName string
 }
 
-//+kubebuilder:rbac:groups=routing.lunar.tech,resources=routingweights,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=routing.lunar.tech,resources=routingweights/status,verbs=get;update;patch
-//+kubebuilder:rbac:groups=routing.lunar.tech,resources=routingweights/finalizers,verbs=update
+//+kubebuilder:rbac:groups=routing.lunar.tech,resources=routingweights,verbs=get;list;watch;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
