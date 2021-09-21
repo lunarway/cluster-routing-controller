@@ -47,6 +47,10 @@ var (
 	setupLog = ctrl.Log.WithName("setup")
 )
 
+const (
+	clusterNameEnvKey = "CLUSTER_NAME"
+)
+
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
 
@@ -72,8 +76,13 @@ func main() {
 	flag.Parse()
 
 	if clusterName == "" {
-		setupLog.Error(fmt.Errorf("No cluster-name provided"), "No cluster-name provided")
-		os.Exit(1)
+		value, exists := os.LookupEnv(clusterNameEnvKey)
+		if !exists {
+			setupLog.Error(fmt.Errorf("no cluster-name flag provided or CLUSTER_NAME environent variable"), "No cluster name provided")
+			os.Exit(1)
+		}
+
+		clusterName = value
 	}
 	setupLog.Info("Starting operator in cluster : %s", clusterName)
 
