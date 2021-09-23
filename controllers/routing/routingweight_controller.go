@@ -70,7 +70,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 
 	logger.Info("Reconciling RoutingWeight")
 	if !operator.IsLocalClusterName(*routingWeight, r.ClusterName) {
-		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.")
+		logger.Info("RoutingWeight ClusterName did not match current cluster name. Skipping.", "RoutingWeightClusterName", routingWeight.Spec.ClusterName, "ClusterName", r.ClusterName)
 		return ctrl.Result{}, nil
 	}
 
