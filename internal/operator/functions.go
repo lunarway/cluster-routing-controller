@@ -53,13 +53,11 @@ func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, r
 	logger := log.FromContext(ctx)
 	for _, annotation := range routingWeight.Spec.Annotations {
 		value, ok := ingress.Annotations[annotation.Key]
-		annotationStr := fmt.Sprintf("%s: %s", annotation.Key, value)
 		if ok {
-
-			logger.Info(fmt.Sprintf("%s Existing annotation found on ingress", logPrefix), "ingress", ingress.Name, "annotation", annotationStr)
+			logger.Info(fmt.Sprintf("%s Existing annotation found on ingress", logPrefix), "ingress", ingress.Name, "annotation", fmt.Sprintf("%s: %s", annotation.Key, value))
 		}
 
-		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation", annotationStr)
+		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation", fmt.Sprintf("%s: %s", annotation.Key, annotation.Value))
 		if !dryRun {
 			ingress.Annotations[annotation.Key] = annotation.Value
 		}
