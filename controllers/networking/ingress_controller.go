@@ -74,7 +74,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
-	err = operator.UpdateIngress(ctx, r.Client, !updateIngress, ingress)
+	err = operator.UpdateIngress(ctx, r.Client, routingWeight, ingress)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

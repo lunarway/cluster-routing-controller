@@ -68,6 +68,9 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
+	if routingWeight.Spec.DryRun {
+		return admission.Allowed("routingWeight is in dryRun. No patches are returned")
+	}
 
 	marshalledIngress, err := json.Marshal(ingress)
 	if err != nil {

@@ -29,8 +29,9 @@ func IsLocalClusterName(routingWeight routingv1alpha1.RoutingWeight, clusterName
 	return routingWeight.Spec.ClusterName == clusterName
 }
 
-func UpdateIngress(ctx context.Context, apiClient client.Client, dryRun bool, ingress *networkingv1.Ingress) error {
+func UpdateIngress(ctx context.Context, apiClient client.Client, routingWeight routingv1alpha1.RoutingWeight, ingress *networkingv1.Ingress) error {
 	logger := log.FromContext(ctx)
+	dryRun := routingWeight.Spec.DryRun
 	logPrefix := logPrefix(dryRun)
 
 	logger.Info(fmt.Sprintf("%s Updating ingress object in api server", logPrefix))
@@ -43,9 +44,10 @@ func UpdateIngress(ctx context.Context, apiClient client.Client, dryRun bool, in
 }
 
 func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, routingWeight routingv1alpha1.RoutingWeight) {
-	logPrefix := "dryRun=false"
-	if routingWeight.Spec.DryRun {
-		logPrefix = "dryRun=true"
+	logPrefix := ""
+	dryRun := routingWeight.Spec.DryRun
+	if dryRun {
+		logPrefix = "[dryRun]"
 	}
 
 	logger := log.FromContext(ctx)
@@ -58,7 +60,9 @@ func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, r
 		}
 
 		logger.Info(fmt.Sprintf("%s Setting annotation on ingress", logPrefix), "ingress", ingress.Name, "annotation", annotationStr)
-		ingress.Annotations[annotation.Key] = annotation.Value
+		if !dryRun {
+			ingress.Annotations[annotation.Key] = annotation.Value
+		}
 	}
 }
 
@@ -101,7 +105,7 @@ func DoesIngressNeedsUpdating(ctx context.Context, client client.Client, cluster
 	}
 
 	routingWeight := localRoutingWeights[0]
-	return !routingWeight.Spec.DryRun, routingWeight, nil
+	return true, routingWeight, nil
 }
 
 func GetRoutingWeightList(ctx context.Context, client client.Client) (*v1alpha1.RoutingWeightList, error) {
