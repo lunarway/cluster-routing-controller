@@ -68,6 +68,11 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
+	if !updateIngress {
+		logger.Info("Ingress is not controlled. skipping.")
+		return ctrl.Result{}, nil
+	}
+
 	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
 	err = operator.UpdateIngress(ctx, r.Client, !updateIngress, ingress)
 	if err != nil {
