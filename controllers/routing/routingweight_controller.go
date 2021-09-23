@@ -90,7 +90,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		ingressPtr := &ingress
 		operator.SetIngressAnnotations(ctx, ingressPtr, *routingWeight)
 
-		err = operator.UpdateIngress(ctx, r.Client, routingWeight.Spec.DryRun, ingressPtr)
+		err = operator.UpdateIngress(ctx, r.Client, *routingWeight, ingressPtr)
 		if err != nil {
 			return reconcile.Result{}, err
 		}
