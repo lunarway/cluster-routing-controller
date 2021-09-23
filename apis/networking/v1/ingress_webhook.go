@@ -64,7 +64,7 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 	}
 
 	if !shouldUpdateIngress {
-		return admission.Allowed("nothing to add")
+		return admission.Allowed("ingress is not controlled")
 	}
 
 	operator.SetIngressAnnotations(ctx, ingress, routingWeight)

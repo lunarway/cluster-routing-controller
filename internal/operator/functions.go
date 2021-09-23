@@ -70,7 +70,6 @@ func DoesIngressNeedsUpdating(ctx context.Context, client client.Client, cluster
 	logger := log.FromContext(ctx)
 
 	if !IsIngressControlled(*ingress) {
-		logger.Info("Ingress is not controlled. skipping.")
 		return false, v1alpha1.RoutingWeight{}, nil
 	}
 
