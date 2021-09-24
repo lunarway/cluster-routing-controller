@@ -103,7 +103,7 @@ func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress
 	var ingresses []networkingv1.Ingress
 
 	for _, ingress := range items {
-		if !operator.IsIngressControlled(ingress) {
+		if !operator.IsResourceControlled(ingress.Annotations) {
 			continue
 		}
 

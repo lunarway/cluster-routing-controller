@@ -52,8 +52,8 @@ type IngressReconciler struct {
 func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	ingress := &networkingv1.Ingress{}
-	err := r.Get(ctx, req.NamespacedName, ingress)
+	ingress := networkingv1.Ingress{}
+	err := r.Get(ctx, req.NamespacedName, &ingress)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -63,7 +63,7 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 
 	logger.Info("IngressController found Ingress")
-	updateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, r.Client, r.ClusterName, ingress)
+	updateIngress, routingWeight, err := operator.DoesResourceNeedsUpdating(ctx, r.Client, r.ClusterName, ingress.Annotations)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -73,8 +73,8 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return ctrl.Result{}, nil
 	}
 
-	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
-	err = operator.UpdateIngress(ctx, r.Client, routingWeight, ingress)
+	operator.SetIngressAnnotations(ctx, &ingress, routingWeight)
+	err = operator.UpdateIngress(ctx, r.Client, routingWeight, &ingress)
 	if err != nil {
 		return reconcile.Result{}, err
 	}

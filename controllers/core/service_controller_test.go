@@ -1,4 +1,4 @@
-package networking
+package core
 
 import (
 	"context"
@@ -6,8 +6,9 @@ import (
 
 	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 
+	corev1 "k8s.io/api/core/v1"
+
 	"github.com/stretchr/testify/assert"
-	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
@@ -17,7 +18,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
-func TestIngressController(t *testing.T) {
+func TestServiceController(t *testing.T) {
 	var (
 		typeMeta = metav1.TypeMeta{
 			Kind:       "RoutingWeight",
@@ -53,206 +54,206 @@ func TestIngressController(t *testing.T) {
 			Spec: v1alpha1.RoutingWeightSpec{
 				ClusterName: clusterName,
 				DryRun:      true,
-				Annotations: []v1alpha1.Annotation{annotation},
 			},
 			Status: v1alpha1.RoutingWeightStatus{},
 		}
 
-		controlledIngress = &networkingv1.Ingress{
+		controlledService = &corev1.Service{
 			TypeMeta: metav1.TypeMeta{
-				Kind:       "Ingress",
-				APIVersion: "networking.k8s.io/v1",
+				Kind:       "Service",
+				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "controlledIngressName",
-				Namespace: "ingressNamespace",
+				Name:      "controlledServiceName",
+				Namespace: "serviceNamespace",
 				Annotations: map[string]string{
 					"routing.lunar.tech/controlled": "true",
 				},
 			},
-			Spec:   networkingv1.IngressSpec{},
-			Status: networkingv1.IngressStatus{},
+			Spec:   corev1.ServiceSpec{},
+			Status: corev1.ServiceStatus{},
 		}
 
-		nonControlledIngress = &networkingv1.Ingress{
+		nonControlledService = &corev1.Service{
 			TypeMeta: metav1.TypeMeta{
-				Kind:       "Ingress",
-				APIVersion: "networking.k8s.io/v1",
+				Kind:       "Service",
+				APIVersion: "v1",
 			},
 			ObjectMeta: metav1.ObjectMeta{
-				Name:      "nonControlledIngressName",
-				Namespace: "ingressNamespace",
+				Name:      "nonControlledServiceName",
+				Namespace: "serviceNamespace",
 			},
-			Spec:   networkingv1.IngressSpec{},
-			Status: networkingv1.IngressStatus{},
+			Spec:   corev1.ServiceSpec{},
+			Status: corev1.ServiceStatus{},
 		}
+
 		ctx = context.Background()
 	)
 
 	t.Run("None controlled Service is kept unchanged", func(t *testing.T) {
 		s := scheme.Scheme
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
+		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		cl := fake.NewClientBuilder().
-			WithObjects(nonControlledIngress).
+			WithObjects(nonControlledService).
 			Build()
 		sut := createSut(cl, s, clusterName)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: nonControlledIngress.Namespace,
-				Name:      nonControlledIngress.Name,
+				Namespace: nonControlledService.Namespace,
+				Name:      nonControlledService.Name,
 			},
 		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 
-		actualIngress := &networkingv1.Ingress{}
+		actualService := &corev1.Service{}
 		err = cl.Get(ctx, types.NamespacedName{
-			Name:      nonControlledIngress.Name,
-			Namespace: nonControlledIngress.Namespace,
-		}, actualIngress)
+			Name:      nonControlledService.Name,
+			Namespace: nonControlledService.Namespace,
+		}, actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, nonControlledIngress.Annotations, actualIngress.Annotations)
+		assert.Equal(t, nonControlledService.Annotations, actualService.Annotations)
 	})
 
-	t.Run("Controlled Service is kept unchanged when no routingWeights are defined", func(t *testing.T) {
+	t.Run("Controlled Ingress is kept unchanged when no routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		cl := fake.NewClientBuilder().
-			WithObjects(controlledIngress).
+			WithObjects(controlledService).
 			Build()
 		sut := createSut(cl, s, clusterName)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: controlledIngress.Namespace,
-				Name:      controlledIngress.Name,
+				Namespace: controlledService.Namespace,
+				Name:      controlledService.Name,
 			},
 		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 
-		actualIngress := &networkingv1.Ingress{}
+		actualService := &corev1.Service{}
 		err = cl.Get(ctx, types.NamespacedName{
-			Name:      controlledIngress.Name,
-			Namespace: controlledIngress.Namespace,
-		}, actualIngress)
+			Name:      controlledService.Name,
+			Namespace: controlledService.Namespace,
+		}, actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
+		assert.Equal(t, controlledService.Annotations, actualService.Annotations)
 	})
 
-	t.Run("Controlled Service is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
+	t.Run("Controlled Ingress is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		cl := fake.NewClientBuilder().
-			WithObjects(controlledIngress, routingWeightResource).
+			WithObjects(controlledService, routingWeightResource).
 			Build()
 		sut := createSut(cl, s, "Another cluster")
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: controlledIngress.Namespace,
-				Name:      controlledIngress.Name,
+				Namespace: controlledService.Namespace,
+				Name:      controlledService.Name,
 			},
 		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 
-		actualIngress := &networkingv1.Ingress{}
+		actualService := &corev1.Service{}
 		err = cl.Get(ctx, types.NamespacedName{
-			Name:      controlledIngress.Name,
-			Namespace: controlledIngress.Namespace,
-		}, actualIngress)
+			Name:      controlledService.Name,
+			Namespace: controlledService.Namespace,
+		}, actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
+		assert.Equal(t, controlledService.Annotations, actualService.Annotations)
 	})
 
-	t.Run("Controlled Service is kept unchanged when in dryRun mode", func(t *testing.T) {
+	t.Run("Controlled Ingress is kept unchanged when in dryRun mode", func(t *testing.T) {
 		s := scheme.Scheme
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(v1alpha1.GroupVersion, dryRunRoutingWeightResource)
 		cl := fake.NewClientBuilder().
-			WithObjects(controlledIngress, dryRunRoutingWeightResource).
+			WithObjects(controlledService, dryRunRoutingWeightResource).
 			Build()
 		sut := createSut(cl, s, clusterName)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: controlledIngress.Namespace,
-				Name:      controlledIngress.Name,
+				Namespace: controlledService.Namespace,
+				Name:      controlledService.Name,
 			},
 		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 
-		actualIngress := &networkingv1.Ingress{}
+		actualService := &corev1.Service{}
 		err = cl.Get(ctx, types.NamespacedName{
-			Name:      controlledIngress.Name,
-			Namespace: controlledIngress.Namespace,
-		}, actualIngress)
+			Name:      controlledService.Name,
+			Namespace: controlledService.Namespace,
+		}, actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, controlledIngress.Annotations, actualIngress.Annotations)
+		assert.Equal(t, controlledService.Annotations, actualService.Annotations)
 	})
 
-	t.Run("None controlled Service is kept unchanged when local routingWeights are defined", func(t *testing.T) {
+	t.Run("None controlled Ingress is kept unchanged when local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
+		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		cl := fake.NewClientBuilder().
-			WithObjects(nonControlledIngress, routingWeightResource).
+			WithObjects(nonControlledService, routingWeightResource).
 			Build()
 		sut := createSut(cl, s, clusterName)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: nonControlledIngress.Namespace,
-				Name:      nonControlledIngress.Name,
+				Namespace: nonControlledService.Namespace,
+				Name:      nonControlledService.Name,
 			},
 		})
 
 		assert.NoError(t, err)
 		assert.Equal(t, ctrl.Result{}, result)
 
-		actualIngress := &networkingv1.Ingress{}
+		actualService := &corev1.Service{}
 		err = cl.Get(ctx, types.NamespacedName{
-			Name:      nonControlledIngress.Name,
-			Namespace: nonControlledIngress.Namespace,
-		}, actualIngress)
+			Name:      nonControlledService.Name,
+			Namespace: nonControlledService.Namespace,
+		}, actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, nonControlledIngress.Annotations, actualIngress.Annotations)
+		assert.Equal(t, nonControlledService.Annotations, actualService.Annotations)
 	})
 
-	t.Run("Controlled Service is changed when local routingWeights are defined", func(t *testing.T) {
+	t.Run("Controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
 		s := scheme.Scheme
 		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
 		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
+		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
 		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource, controlledIngress).
+			WithObjects(routingWeightResource, controlledService).
 			Build()
 		sut := createSut(cl, s, clusterName)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
-				Namespace: controlledIngress.Namespace,
-				Name:      controlledIngress.Name,
+				Namespace: controlledService.Namespace,
+				Name:      controlledService.Name,
 			},
 		})
 
@@ -264,20 +265,20 @@ func TestIngressController(t *testing.T) {
 			"routing.lunar.tech/controlled": "true",
 		}
 
-		actualIngress := &networkingv1.Ingress{}
+		actualService := &corev1.Service{}
 		err = cl.Get(ctx, types.NamespacedName{
-			Name:      controlledIngress.Name,
-			Namespace: controlledIngress.Namespace,
-		}, actualIngress)
+			Name:      controlledService.Name,
+			Namespace: controlledService.Namespace,
+		}, actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, expectedAnnotations, actualIngress.Annotations)
+		assert.Equal(t, expectedAnnotations, actualService.Annotations)
 	})
 
 }
 
-func createSut(c client.WithWatch, s *runtime.Scheme, clusterName string) *IngressReconciler {
-	return &IngressReconciler{
+func createSut(c client.WithWatch, s *runtime.Scheme, clusterName string) *ServiceReconciler {
+	return &ServiceReconciler{
 		Client:      c,
 		Scheme:      s,
 		ClusterName: clusterName,
