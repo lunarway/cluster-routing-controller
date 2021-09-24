@@ -46,8 +46,8 @@ func (a *IngressAnnotator) InjectDecoder(d *admission.Decoder) error {
 }
 
 func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) admission.Response {
-	ingress := &networkingv1.Ingress{}
-	err := a.decoder.Decode(req, ingress)
+	ingress := networkingv1.Ingress{}
+	err := a.decoder.Decode(req, &ingress)
 	if err != nil {
 		return admission.Errored(http.StatusBadRequest, err)
 	}
@@ -58,7 +58,7 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 		return admission.Allowed("not a create operation")
 	}
 
-	shouldUpdateIngress, routingWeight, err := operator.DoesIngressNeedsUpdating(ctx, a.Client, a.ClusterName, ingress)
+	shouldUpdateIngress, routingWeight, err := operator.DoesResourceNeedsUpdating(ctx, a.Client, a.ClusterName, ingress.Annotations)
 	if err != nil {
 		return admission.Errored(http.StatusInternalServerError, err)
 	}
@@ -67,7 +67,7 @@ func (a *IngressAnnotator) Handle(ctx context.Context, req admission.Request) ad
 		return admission.Allowed("ingress is not controlled")
 	}
 
-	operator.SetIngressAnnotations(ctx, ingress, routingWeight)
+	operator.SetIngressAnnotations(ctx, &ingress, routingWeight)
 	if routingWeight.Spec.DryRun {
 		return admission.Allowed("routingWeight is in dryRun. No patches are returned")
 	}

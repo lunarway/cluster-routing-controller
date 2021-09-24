@@ -7,6 +7,8 @@ import (
 	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 
+	corev1 "k8s.io/api/core/v1"
+
 	networkingv1 "k8s.io/api/networking/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -60,16 +62,47 @@ func SetIngressAnnotations(ctx context.Context, ingress *networkingv1.Ingress, r
 	}
 }
 
-func IsIngressControlled(ingress networkingv1.Ingress) bool {
-	value, ok := ingress.Annotations[controlledByAnnotationKey]
+func UpdateService(ctx context.Context, apiClient client.Client, routingWeight routingv1alpha1.RoutingWeight, service *corev1.Service) error {
+	logger := log.FromContext(ctx)
+	dryRun := routingWeight.Spec.DryRun
+	logPrefix := logPrefix(routingWeight)
+
+	logger.Info(fmt.Sprintf("%s Updating service object in api server", logPrefix))
+	if dryRun {
+		logger.Info(fmt.Sprintf("%s Dryrun of change. Doing nothing", logPrefix))
+		return nil
+	}
+
+	return apiClient.Update(ctx, service)
+}
+
+func SetServiceAnnotations(ctx context.Context, service *corev1.Service, routingWeight routingv1alpha1.RoutingWeight) {
+	logPrefix := logPrefix(routingWeight)
+
+	logger := log.FromContext(ctx)
+	for _, annotation := range routingWeight.Spec.Annotations {
+		value, ok := service.Annotations[annotation.Key]
+		if ok {
+			logger.Info(fmt.Sprintf("%s Existing annotation found on service", logPrefix), "service", service.Name, "annotation", fmt.Sprintf("%s: %s", annotation.Key, value))
+		}
+
+		logger.Info(fmt.Sprintf("%s Setting annotation on service", logPrefix), "service", service.Name, "annotation", fmt.Sprintf("%s: %s", annotation.Key, annotation.Value))
+		if !routingWeight.Spec.DryRun {
+			service.Annotations[annotation.Key] = annotation.Value
+		}
+	}
+}
+
+func IsResourceControlled(annotations map[string]string) bool {
+	value, ok := annotations[controlledByAnnotationKey]
 
 	return ok && value == "true"
 }
 
-func DoesIngressNeedsUpdating(ctx context.Context, client client.Client, clusterName string, ingress *networkingv1.Ingress) (bool, v1alpha1.RoutingWeight, error) {
+func DoesResourceNeedsUpdating(ctx context.Context, client client.Client, clusterName string, annotations map[string]string) (bool, v1alpha1.RoutingWeight, error) {
 	logger := log.FromContext(ctx)
 
-	if !IsIngressControlled(*ingress) {
+	if !IsResourceControlled(annotations) {
 		return false, v1alpha1.RoutingWeight{}, nil
 	}
 

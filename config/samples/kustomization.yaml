@@ -2,4 +2,5 @@
 resources:
 - routing_v1alpha1_routingweight.yaml
 - networking_v1_ingress.yaml
+- core_v1_service.yaml
 #+kubebuilder:scaffold:manifestskustomizesamples

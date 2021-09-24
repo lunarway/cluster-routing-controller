@@ -39,6 +39,8 @@ import (
 	"github/lunarway/cluster-routing-controller/controllers/routing"
 
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
+
+	corecontrollers "github/lunarway/cluster-routing-controller/controllers/core"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -109,6 +111,14 @@ func main() {
 		os.Exit(1)
 	}
 
+	if err = (&corecontrollers.ServiceReconciler{
+		Client:      mgr.GetClient(),
+		Scheme:      mgr.GetScheme(),
+		ClusterName: clusterName,
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "Service")
+		os.Exit(1)
+	}
 	//+kubebuilder:scaffold:builder
 	mgr.GetWebhookServer().Register("/mutate-networking-k8s-io-v1-ingress", &webhook.Admission{
 		Handler: &v1.IngressAnnotator{

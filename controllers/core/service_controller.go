@@ -14,46 +14,39 @@ See the License for the specific language governing permissions and
 limitations under the License.
 */
 
-package networking
+package core
 
 import (
 	"context"
 
 	"github/lunarway/cluster-routing-controller/internal/operator"
 
-	"sigs.k8s.io/controller-runtime/pkg/log"
-
-	networkingv1 "k8s.io/api/networking/v1"
-	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-// IngressReconciler reconciles a Ingress object
-type IngressReconciler struct {
+// ServiceReconciler reconciles a Service object
+type ServiceReconciler struct {
 	client.Client
 	Scheme      *runtime.Scheme
 	ClusterName string
 }
 
-//+kubebuilder:rbac:groups=networking.k8s.io,resources=ingresses,verbs=get;list;watch;update;patch
+//+kubebuilder:rbac:groups=core,resources=services,verbs=get;list;watch;update;patch
 
 // Reconcile is part of the main kubernetes reconciliation loop which aims to
 // move the current state of the cluster closer to the desired state.
-// TODO(user): Modify the Reconcile function to compare the state specified by
-// the Ingress object against the actual cluster state, and then
-// perform operations to make the cluster state reflect the state specified by
-// the user.
-//
-// For more details, check Reconcile and its Result here:
-// - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.9.2/pkg/reconcile
-func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
+func (r *ServiceReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.FromContext(ctx)
 
-	ingress := networkingv1.Ingress{}
-	err := r.Get(ctx, req.NamespacedName, &ingress)
+	service := corev1.Service{}
+	err := r.Get(ctx, req.NamespacedName, &service)
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return reconcile.Result{}, nil
@@ -62,19 +55,19 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 		return reconcile.Result{}, err
 	}
 
-	logger.Info("IngressController found Ingress")
-	updateIngress, routingWeight, err := operator.DoesResourceNeedsUpdating(ctx, r.Client, r.ClusterName, ingress.Annotations)
+	logger.Info("ServiceController found Service")
+	updateService, routingWeight, err := operator.DoesResourceNeedsUpdating(ctx, r.Client, r.ClusterName, service.Annotations)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
 
-	if !updateIngress {
-		logger.Info("Ingress is not controlled. skipping.")
+	if !updateService {
+		logger.Info("Service is not controlled. skipping.")
 		return ctrl.Result{}, nil
 	}
 
-	operator.SetIngressAnnotations(ctx, &ingress, routingWeight)
-	err = operator.UpdateIngress(ctx, r.Client, routingWeight, &ingress)
+	operator.SetServiceAnnotations(ctx, &service, routingWeight)
+	err = operator.UpdateService(ctx, r.Client, routingWeight, &service)
 	if err != nil {
 		return reconcile.Result{}, err
 	}
@@ -83,8 +76,8 @@ func (r *IngressReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 }
 
 // SetupWithManager sets up the controller with the Manager.
-func (r *IngressReconciler) SetupWithManager(mgr ctrl.Manager) error {
+func (r *ServiceReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&networkingv1.Ingress{}).
+		For(&corev1.Service{}).
 		Complete(r)
 }
