@@ -23,9 +23,6 @@ resources:
   kind: Ingress
   path: k8s.io/api/networking/v1
   version: v1
-  webhooks:
-    defaulting: true
-    webhookVersion: v1
 - controller: true
   group: core
   kind: Service
