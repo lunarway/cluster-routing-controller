@@ -2,25 +2,17 @@ package routing
 
 import (
 	"context"
+	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 	"testing"
 
-	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
-
-	networkingv1 "k8s.io/api/networking/v1"
-
-	"k8s.io/apimachinery/pkg/runtime"
-
-	"sigs.k8s.io/controller-runtime/pkg/client"
-
 	"github.com/stretchr/testify/assert"
-
-	"k8s.io/apimachinery/pkg/types"
-	ctrl "sigs.k8s.io/controller-runtime"
-
-	"sigs.k8s.io/controller-runtime/pkg/client/fake"
-
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
+	ctrl "sigs.k8s.io/controller-runtime"
+	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
 func TestRoutingWeightController(t *testing.T) {
@@ -112,13 +104,7 @@ func TestRoutingWeightController(t *testing.T) {
 	)
 
 	t.Run("Set annotations on ingress when control annotation is set", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
-		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource, controlledIngress).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, routingWeightResource, controlledIngress)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -136,7 +122,7 @@ func TestRoutingWeightController(t *testing.T) {
 		}
 
 		actualIngress := &networkingv1.Ingress{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledIngress.Name,
 			Namespace: controlledIngress.Namespace,
 		}, actualIngress)
@@ -146,13 +132,7 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 
 	t.Run("Does not set annotation on ingress when cluster names does not match", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
-		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource, controlledIngress).
-			Build()
-		sut := createSut(cl, s, "Another cluster name")
+		sut := createSut(t, "Another cluster name", routingWeightResource, controlledIngress)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -171,7 +151,7 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualIngress := &networkingv1.Ingress{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledIngress.Name,
 			Namespace: controlledIngress.Namespace,
 		}, actualIngress)
@@ -181,13 +161,7 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 
 	t.Run("Does not set annotation on ingress when control annotation is not set", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, nonControlledIngress)
-		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource, nonControlledIngress).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, routingWeightResource, nonControlledIngress)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -200,7 +174,7 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualIngress := &networkingv1.Ingress{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      nonControlledIngress.Name,
 			Namespace: nonControlledIngress.Namespace,
 		}, actualIngress)
@@ -210,13 +184,7 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 
 	t.Run("Does not set annotation on ingress when control annotation is set but is in dryRun mode", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, dryRunRoutingWeightResource)
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngress)
-		cl := fake.NewClientBuilder().
-			WithObjects(dryRunRoutingWeightResource, controlledIngress).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, dryRunRoutingWeightResource, controlledIngress)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -229,7 +197,7 @@ func TestRoutingWeightController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualIngress := &networkingv1.Ingress{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledIngress.Name,
 			Namespace: controlledIngress.Namespace,
 		}, actualIngress)
@@ -239,13 +207,7 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 
 	t.Run("Updates annotation on ingress when annotation already exists with different value", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		s.AddKnownTypes(networkingv1.SchemeGroupVersion, controlledIngressWithWeights)
-		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource, controlledIngressWithWeights).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, routingWeightResource, controlledIngressWithWeights)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -263,7 +225,7 @@ func TestRoutingWeightController(t *testing.T) {
 		}
 
 		actualIngress := &networkingv1.Ingress{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledIngressWithWeights.Name,
 			Namespace: controlledIngressWithWeights.Namespace,
 		}, actualIngress)
@@ -273,12 +235,7 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 
 	t.Run("Does nothing when no ingresses exist", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, routingWeightResource)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -298,9 +255,20 @@ func TestRoutingWeightController(t *testing.T) {
 	})
 }
 
-func createSut(c client.WithWatch, s *runtime.Scheme, clusterName string) *RoutingWeightReconciler {
+func createSut(t *testing.T, clusterName string, objects ...client.Object) *RoutingWeightReconciler {
+	t.Helper()
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeight{})
+	s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
+	s.AddKnownTypes(networkingv1.SchemeGroupVersion, &networkingv1.Ingress{})
+
+	client := fake.NewClientBuilder().
+		WithObjects(objects...).
+		Build()
+
 	return &RoutingWeightReconciler{
-		Client:      c,
+		Client:      client,
 		Scheme:      s,
 		ClusterName: clusterName,
 	}
