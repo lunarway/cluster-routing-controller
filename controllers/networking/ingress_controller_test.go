@@ -135,7 +135,7 @@ func TestIngressController(t *testing.T) {
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
-		sut := createSut(t, clusterName, controlledIngress, routingWeightResource)
+		sut := createSut(t, "Another Cluster", controlledIngress, routingWeightResource)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
