@@ -6,11 +6,12 @@ import (
 
 	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 
+	networkingv1 "k8s.io/api/networking/v1"
+
 	corev1 "k8s.io/api/core/v1"
 
 	"github.com/stretchr/testify/assert"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes/scheme"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -91,14 +92,7 @@ func TestServiceController(t *testing.T) {
 	)
 
 	t.Run("None controlled Service is kept unchanged", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
-		cl := fake.NewClientBuilder().
-			WithObjects(nonControlledService).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, nonControlledService)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -111,7 +105,7 @@ func TestServiceController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualService := &corev1.Service{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      nonControlledService.Name,
 			Namespace: nonControlledService.Namespace,
 		}, actualService)
@@ -121,14 +115,7 @@ func TestServiceController(t *testing.T) {
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when no routingWeights are defined", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
-		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		cl := fake.NewClientBuilder().
-			WithObjects(controlledService).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, controlledService)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -141,7 +128,7 @@ func TestServiceController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualService := &corev1.Service{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledService.Name,
 			Namespace: controlledService.Namespace,
 		}, actualService)
@@ -151,14 +138,7 @@ func TestServiceController(t *testing.T) {
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when no local routingWeights are defined", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
-		cl := fake.NewClientBuilder().
-			WithObjects(controlledService, routingWeightResource).
-			Build()
-		sut := createSut(cl, s, "Another cluster")
+		sut := createSut(t, "Another cluster", controlledService, routingWeightResource)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -171,7 +151,7 @@ func TestServiceController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualService := &corev1.Service{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledService.Name,
 			Namespace: controlledService.Namespace,
 		}, actualService)
@@ -181,14 +161,7 @@ func TestServiceController(t *testing.T) {
 	})
 
 	t.Run("Controlled Ingress is kept unchanged when in dryRun mode", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
-		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
-		s.AddKnownTypes(v1alpha1.GroupVersion, dryRunRoutingWeightResource)
-		cl := fake.NewClientBuilder().
-			WithObjects(controlledService, dryRunRoutingWeightResource).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, controlledService, dryRunRoutingWeightResource)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -201,7 +174,7 @@ func TestServiceController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualService := &corev1.Service{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledService.Name,
 			Namespace: controlledService.Namespace,
 		}, actualService)
@@ -211,14 +184,7 @@ func TestServiceController(t *testing.T) {
 	})
 
 	t.Run("None controlled Ingress is kept unchanged when local routingWeights are defined", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
-		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		cl := fake.NewClientBuilder().
-			WithObjects(nonControlledService, routingWeightResource).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, nonControlledService, routingWeightResource)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -231,7 +197,7 @@ func TestServiceController(t *testing.T) {
 		assert.Equal(t, ctrl.Result{}, result)
 
 		actualService := &corev1.Service{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      nonControlledService.Name,
 			Namespace: nonControlledService.Namespace,
 		}, actualService)
@@ -241,14 +207,7 @@ func TestServiceController(t *testing.T) {
 	})
 
 	t.Run("Controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
-		s := scheme.Scheme
-		s.AddKnownTypes(v1alpha1.GroupVersion, routingWeightResource)
-		s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
-		s.AddKnownTypes(corev1.SchemeGroupVersion, nonControlledService)
-		cl := fake.NewClientBuilder().
-			WithObjects(routingWeightResource, controlledService).
-			Build()
-		sut := createSut(cl, s, clusterName)
+		sut := createSut(t, clusterName, routingWeightResource, controlledService)
 
 		result, err := sut.Reconcile(ctx, ctrl.Request{
 			NamespacedName: types.NamespacedName{
@@ -266,7 +225,7 @@ func TestServiceController(t *testing.T) {
 		}
 
 		actualService := &corev1.Service{}
-		err = cl.Get(ctx, types.NamespacedName{
+		err = sut.Get(ctx, types.NamespacedName{
 			Name:      controlledService.Name,
 			Namespace: controlledService.Namespace,
 		}, actualService)
@@ -277,9 +236,20 @@ func TestServiceController(t *testing.T) {
 
 }
 
-func createSut(c client.WithWatch, s *runtime.Scheme, clusterName string) *ServiceReconciler {
+func createSut(t *testing.T, clusterName string, objects ...client.Object) *ServiceReconciler {
+	t.Helper()
+
+	s := scheme.Scheme
+	s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeight{})
+	s.AddKnownTypes(v1alpha1.GroupVersion, &v1alpha1.RoutingWeightList{})
+	s.AddKnownTypes(networkingv1.SchemeGroupVersion, &networkingv1.Ingress{})
+
+	client := fake.NewClientBuilder().
+		WithObjects(objects...).
+		Build()
+
 	return &ServiceReconciler{
-		Client:      c,
+		Client:      client,
 		Scheme:      s,
 		ClusterName: clusterName,
 	}
