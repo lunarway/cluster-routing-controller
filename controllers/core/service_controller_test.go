@@ -88,6 +88,22 @@ func TestServiceController(t *testing.T) {
 			Status: corev1.ServiceStatus{},
 		}
 
+		explicitNonControlledService = &corev1.Service{
+			TypeMeta: metav1.TypeMeta{
+				Kind:       "Service",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metav1.ObjectMeta{
+				Name:      "nonControlledServiceName",
+				Namespace: "serviceNamespace",
+				Annotations: map[string]string{
+					"routing.lunar.tech/controlled": "false",
+				},
+			},
+			Spec:   corev1.ServiceSpec{},
+			Status: corev1.ServiceStatus{},
+		}
+
 		ctx = context.Background()
 	)
 
@@ -234,6 +250,32 @@ func TestServiceController(t *testing.T) {
 		assert.Equal(t, expectedAnnotations, actualService.Annotations)
 	})
 
+	t.Run("Explicitly non-controlled Ingress is changed when local routingWeights are defined", func(t *testing.T) {
+		sut := createSut(t, clusterName, routingWeightResource, explicitNonControlledService)
+
+		result, err := sut.Reconcile(ctx, ctrl.Request{
+			NamespacedName: types.NamespacedName{
+				Namespace: explicitNonControlledService.Namespace,
+				Name:      explicitNonControlledService.Name,
+			},
+		})
+
+		assert.NoError(t, err)
+		assert.Equal(t, ctrl.Result{}, result)
+
+		expectedAnnotations := map[string]string{
+			"routing.lunar.tech/controlled": "false",
+		}
+
+		actualService := &corev1.Service{}
+		err = sut.Get(ctx, types.NamespacedName{
+			Name:      explicitNonControlledService.Name,
+			Namespace: explicitNonControlledService.Namespace,
+		}, actualService)
+		assert.NoError(t, err)
+
+		assert.Equal(t, expectedAnnotations, actualService.Annotations)
+	})
 }
 
 func createSut(t *testing.T, clusterName string, objects ...client.Object) *ServiceReconciler {
