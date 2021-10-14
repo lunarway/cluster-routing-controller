@@ -22,6 +22,8 @@ import (
 	routingv1alpha1 "github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
 	"github/lunarway/cluster-routing-controller/internal/operator"
 
+	corev1 "k8s.io/api/core/v1"
+
 	networkingv1 "k8s.io/api/networking/v1"
 
 	"k8s.io/apimachinery/pkg/api/errors"
@@ -74,6 +76,7 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		return ctrl.Result{}, nil
 	}
 
+	// Handle ingresses
 	ingressList, err := r.getIngressList(ctx)
 	if err != nil {
 		logger.Error(err, "get ingressList")
@@ -96,6 +99,29 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 		}
 	}
 
+	// Handle services
+	serviceList, err := r.getServiceList(ctx)
+	if err != nil {
+		logger.Error(err, "get serviceList")
+		return reconcile.Result{}, err
+	}
+
+	services := getControlledServices(serviceList.Items)
+	if len(services) == 0 {
+		logger.Info("Found no services to be controlled")
+		return ctrl.Result{}, nil
+	}
+
+	for _, service := range services {
+		servicesPtr := &service
+		operator.SetServiceAnnotations(ctx, servicesPtr, *routingWeight)
+
+		err = operator.UpdateService(ctx, r.Client, *routingWeight, servicesPtr)
+		if err != nil {
+			return reconcile.Result{}, err
+		}
+	}
+
 	return ctrl.Result{}, nil
 }
 
@@ -113,12 +139,34 @@ func getControlledIngresses(items []networkingv1.Ingress) []networkingv1.Ingress
 	return ingresses
 }
 
+func getControlledServices(items []corev1.Service) []corev1.Service {
+	var services []corev1.Service
+
+	for _, service := range items {
+		if !operator.IsResourceControlled(service.Annotations) {
+			continue
+		}
+
+		services = append(services, service)
+	}
+
+	return services
+}
+
 func (r *RoutingWeightReconciler) getIngressList(ctx context.Context) (*networkingv1.IngressList, error) {
 	ingressList := &networkingv1.IngressList{}
 	if err := r.List(ctx, ingressList); err != nil {
 		return nil, err
 	}
 	return ingressList, nil
+}
+
+func (r *RoutingWeightReconciler) getServiceList(ctx context.Context) (*corev1.ServiceList, error) {
+	serviceList := corev1.ServiceList{}
+	if err := r.List(ctx, &serviceList); err != nil {
+		return nil, err
+	}
+	return &serviceList, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

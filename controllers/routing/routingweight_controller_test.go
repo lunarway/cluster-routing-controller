@@ -2,9 +2,13 @@ package routing
 
 import (
 	"context"
+	"os"
 	"testing"
 
 	"github/lunarway/cluster-routing-controller/apis/routing/v1alpha1"
+
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 
 	corev1 "k8s.io/api/core/v1"
 
@@ -19,6 +23,8 @@ import (
 )
 
 func TestRoutingWeightController(t *testing.T) {
+	logf.SetLogger(zap.New(zap.WriteTo(os.Stdout), zap.UseDevMode(true)))
+
 	var (
 		typeMeta = metav1.TypeMeta{
 			Kind:       "RoutingWeight",
@@ -326,8 +332,8 @@ func TestRoutingWeightController(t *testing.T) {
 			Name:      controlledService.Name,
 			Namespace: controlledService.Namespace,
 		}, &actualService)
-		assert.NoError(t, err)
 
+		assert.NoError(t, err)
 		assert.Equal(t, expectedAnnotations, actualService.Annotations)
 	})
 
@@ -357,7 +363,7 @@ func TestRoutingWeightController(t *testing.T) {
 		}, &actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, controlledService, actualService)
+		assert.Equal(t, controlledService.Annotations, actualService.Annotations)
 	})
 
 	t.Run("Does not set annotation on service when control annotation is not set", func(t *testing.T) {
@@ -380,7 +386,7 @@ func TestRoutingWeightController(t *testing.T) {
 		}, &actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, nonControlledService, actualService)
+		assert.Equal(t, nonControlledService.Annotations, actualService.Annotations)
 	})
 
 	t.Run("Does not set annotation on service when control annotation is set but is in dryRun mode", func(t *testing.T) {
@@ -403,7 +409,7 @@ func TestRoutingWeightController(t *testing.T) {
 		}, &actualService)
 		assert.NoError(t, err)
 
-		assert.Equal(t, controlledService, actualService)
+		assert.Equal(t, controlledService.Annotations, actualService.Annotations)
 	})
 
 	t.Run("Updates annotation on service when annotation already exists with different value", func(t *testing.T) {
@@ -429,8 +435,8 @@ func TestRoutingWeightController(t *testing.T) {
 			Name:      controlledServiceWithWeights.Name,
 			Namespace: controlledServiceWithWeights.Namespace,
 		}, &actualService)
-		assert.NoError(t, err)
 
+		assert.NoError(t, err)
 		assert.Equal(t, expectedAnnotations, actualService.Annotations)
 	})
 }
