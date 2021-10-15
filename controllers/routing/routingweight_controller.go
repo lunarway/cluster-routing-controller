@@ -84,11 +84,6 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	ingresses := getControlledIngresses(ingressList.Items)
-	if len(ingresses) == 0 {
-		logger.Info("Found no ingresses to be controlled")
-		return ctrl.Result{}, nil
-	}
-
 	for _, ingress := range ingresses {
 		ingressPtr := &ingress
 		operator.SetIngressAnnotations(ctx, ingressPtr, *routingWeight)
@@ -107,11 +102,6 @@ func (r *RoutingWeightReconciler) Reconcile(ctx context.Context, req ctrl.Reques
 	}
 
 	services := getControlledServices(serviceList.Items)
-	if len(services) == 0 {
-		logger.Info("Found no services to be controlled")
-		return ctrl.Result{}, nil
-	}
-
 	for _, service := range services {
 		servicesPtr := &service
 		operator.SetServiceAnnotations(ctx, servicesPtr, *routingWeight)
