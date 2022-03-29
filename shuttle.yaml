@@ -1,4 +1,5 @@
 plan: false
 vars:
   service: cluster-routing-controller
-  squad: nasa
+  squad: odyssey
+  domain: multi-cloud-container-runtime
