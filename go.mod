@@ -7,7 +7,7 @@ require (
 	github.com/onsi/gomega v1.19.0
 	github.com/stretchr/testify v1.7.1
 	k8s.io/api v0.23.6
-	k8s.io/apimachinery v0.23.6
+	k8s.io/apimachinery v0.24.0
 	k8s.io/client-go v0.23.6
 	sigs.k8s.io/controller-runtime v0.11.2
 )
