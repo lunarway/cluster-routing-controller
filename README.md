@@ -19,4 +19,5 @@ The annotations are put on Ingress objects that has the opt-in annotation `routi
 **The red part** is either controller by outside yaml or another operator that knows this clusters identity. It could be [Cluster Identity Controller](https://github.com/lunarway/cluster-identity-controller). The configmap should have a field witht the name of the given cluster.
 
 ## Releasing
-To release a new version of the operator run make release TAG=x.x.x. This will ensure to update the version, create a commit and push it. The Release GitHub Action workflow is then triggered and pushes the Docker image to quay.io.
+
+Releases are automated via Release Drafter. Commits to the default branch are automatically picked up and added the a draft release. When ready, publish the draft release.
